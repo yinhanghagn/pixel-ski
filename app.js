@@ -379,8 +379,8 @@ function ticketTable(r) {
   r.per.forEach(p => Object.keys(p.multi).forEach(k => ns.add(+k)));
   const cells = [...ns].sort((a, b) => a - b).map(n => ({ n, i: priceOn(r, UI.date, n) })).filter(x => x.i.s === 'open');
   if (cells.length < 2) return '';
-  return `<p class="note">${fmtMD(UI.date)} 出发的各种票：</p><div class="tickets">${cells.map(({ n, i }) =>
-    `<span${n === UI.n ? ' class="cur"' : ''}><b>${ticketName(n)}</b><span class="num">${money(i.p, r.cur)}</span><small>每天 ${money(i.p / n, r.cur)}</small></span>`).join('')}</div>`;
+  return `<p class="note">${fmtMD(UI.date)} 出发的各种票（点一下切换，下面的日历跟着变）：</p><div class="tickets">${cells.map(({ n, i }) =>
+    `<button class="tk${n === UI.n ? ' cur' : ''}" data-n="${n}" aria-pressed="${n === UI.n}"><b>${ticketName(n)}</b><span class="num">${money(i.p, r.cur)}</span><small>每天 ${money(i.p / n, r.cur)}</small></button>`).join('')}</div>`;
 }
 function detail(r) {
   const n = UI.n, i = priceOn(r, UI.date, n);
@@ -873,6 +873,7 @@ function boot() {
   $('#list').addEventListener('click', e => {
     if (e.target.closest('a')) return;
     const cell = e.target.closest('[data-day]'); if (cell) { UI.date = cell.dataset.day; renderPrices(); return; }
+    const tk = e.target.closest('[data-n]'); if (tk) { UI.n = +tk.dataset.n; $('#ticket').value = UI.n; renderPrices(); return; }
     const lg = e.target.closest('[data-log]'); if (lg) { prefillLog(lg.dataset.log, UI.date); return; }
     const row = e.target.closest('.row'); if (row) { UI.open = UI.open === row.dataset.id ? null : row.dataset.id; renderPrices(); }
   });
