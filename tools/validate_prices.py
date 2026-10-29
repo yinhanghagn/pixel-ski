@@ -17,7 +17,7 @@ DATE = re.compile(r'^\d{4}-\d{2}-\d{2}$')
 ID = re.compile(r'^[a-z0-9][a-z0-9-]*$')
 TOP_KEYS = {'season', 'updated', 'currency', 'range', 'tiers', 'notice', 'sources', 'resorts', 'countries', 'fx'}
 RESORT_KEYS = {'id', 'name', 'sub', 'country', 'state', 'currency', 'price', 'multi', 'open', 'close', 'periods',
-               'dynamic', 'fromPrice', 'estimated', 'aliases', 'note', 'source'}
+               'dynamic', 'fromPrice', 'estimated', 'aliases', 'note', 'source', 'shop'}
 PERIOD_KEYS = {'from', 'to', 'price', 'label', 'multi'}
 PRICE_MIN, PRICE_MAX = 20, 200          # plausible adult 1-day price, in EUR/CHF
 
@@ -165,6 +165,10 @@ def validate(doc):
             rep.err(where, 'aliases 必须是字符串列表')
         if 'source' in r and not str(r['source']).startswith(('http://', 'https://')):
             rep.err(where, 'source 必须是网址')
+        if 'shop' not in r:
+            rep.warn(where, '没有 shop（官网购票链接）')
+        elif not str(r['shop']).startswith('https://'):
+            rep.err(where, 'shop 必须是 https:// 开头的官网网址')
     return rep
 
 
@@ -179,7 +183,7 @@ def diff(old, new):
         lines.append(f'新增 {rid}（{n[rid].get("name")}）')
     for rid in sorted(o.keys() & n.keys()):
         a, b = o[rid], n[rid]
-        for k in ('price', 'fromPrice', 'open', 'close', 'dynamic', 'multi', 'periods'):
+        for k in ('price', 'fromPrice', 'open', 'close', 'dynamic', 'multi', 'periods', 'shop'):
             if a.get(k) != b.get(k):
                 lines.append(f'{rid}: {k} {json.dumps(a.get(k), ensure_ascii=False)} → {json.dumps(b.get(k), ensure_ascii=False)}')
                 if k == 'price' and is_num(a.get(k)) and is_num(b.get(k)) and abs(b[k] - a[k]) / a[k] > 0.15:

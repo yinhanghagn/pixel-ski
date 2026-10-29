@@ -1,9 +1,9 @@
 // Offline support.
-// - prices.json: network first, so an updated file shows up the next time the app opens online.
-// - app files: served from cache at once and refreshed in the background (changes show on the next open).
+// - prices.json and app files: network first, so a new version shows up the first time the app opens online;
+//   the cached copy is only used offline.
 // - Google Fonts: cached after the first load.
 // Bump VERSION only if you want every installed copy to drop its old cache.
-const VERSION = 'v2';
+const VERSION = 'v3';
 const SHELL = `pixel-ski-shell-${VERSION}`;
 const FONTS = `pixel-ski-fonts-${VERSION}`;
 const CORE = [
@@ -12,7 +12,8 @@ const CORE = [
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(SHELL).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
+  // cache: 'reload' skips the browser's HTTP cache, which GitHub Pages keeps for 10 minutes
+  e.waitUntil(caches.open(SHELL).then(c => c.addAll(CORE.map(u => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
@@ -23,17 +24,15 @@ self.addEventListener('activate', e => {
   );
 });
 
-async function networkFirst(req) {
+async function networkFirst(req, fallbackUrl) {
   const cache = await caches.open(SHELL);
-  try {
-    const res = await fetch(req);
-    if (res.ok) cache.put(req, res.clone());
-    return res;
-  } catch (err) {
-    const hit = await cache.match(req, { ignoreSearch: true });
-    if (hit) return hit;
-    throw err;
-  }
+  const cached = async () => (await cache.match(req, { ignoreSearch: true })) || (fallbackUrl ? cache.match(fallbackUrl) : undefined);
+  const fromNet = fetch(req, { cache: 'no-cache' })
+    .then(res => { if (res.ok) cache.put(req, res.clone()); return res; })
+    .catch(async err => (await cached()) || Promise.reject(err));
+  // weak signal on the mountain: after 4 s use the cached copy if there is one
+  const slow = new Promise(r => setTimeout(r, 4000)).then(async () => (await cached()) || fromNet);
+  return Promise.race([fromNet, slow]);
 }
 
 async function staleWhileRevalidate(req, cacheName, fallbackUrl) {
@@ -57,10 +56,8 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
 
-  if (url.origin === location.origin && url.pathname.endsWith('/prices.json')) {
-    e.respondWith(networkFirst(req));
-  } else if (url.origin === location.origin) {
-    e.respondWith(staleWhileRevalidate(req, SHELL, req.mode === 'navigate' ? './index.html' : null));
+  if (url.origin === location.origin) {
+    e.respondWith(networkFirst(req, req.mode === 'navigate' ? './index.html' : null));
   } else if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
     e.respondWith(staleWhileRevalidate(req, FONTS));
   }

@@ -1,0 +1,105 @@
+# 每周一让 Codex 核对雪票价格，有变化就开一个 Pull Request（不会直接改 main）。
+# 需要：仓库 Secrets 里有 OPENAI_API_KEY；
+#       Settings → Actions → General → Workflow permissions 勾选
+#       "Allow GitHub Actions to create and approve pull requests"。
+# 手动跑一次：Actions → 每周雪票价格更新 → Run workflow。
+name: 每周雪票价格更新
+
+on:
+  schedule:
+    - cron: '0 4 * * 1'   # 每周一 04:00 UTC（维也纳冬令时 05:00）
+  workflow_dispatch:
+
+concurrency:
+  group: weekly-prices
+  cancel-in-progress: false
+
+jobs:
+  codex:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.check.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: 保存旧价格
+        run: cp prices.json "$RUNNER_TEMP/prices.old.json"
+
+      # Codex 只能改工作区里的文件，命令行没有网络；--search 让它能用联网搜索查价格。
+      - name: Codex 查价格
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          prompt-file: .github/codex/weekly-prices.md
+          permission-profile: ':workspace'
+          codex-args: '["--search"]'
+          output-file: ${{ runner.temp }}/codex-summary.md
+
+      - name: 校验
+        id: check
+        run: |
+          mkdir -p "$RUNNER_TEMP/out"
+          python3 tools/validate_prices.py --old "$RUNNER_TEMP/prices.old.json" | tee "$RUNNER_TEMP/out/validate.txt"
+          if git diff --quiet -- prices.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "价格没有变化，不开 PR。"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            cp prices.json "$RUNNER_TEMP/out/prices.json"
+            cp "$RUNNER_TEMP/codex-summary.md" "$RUNNER_TEMP/out/codex-summary.md" 2>/dev/null || echo "（Codex 没有留下说明）" > "$RUNNER_TEMP/out/codex-summary.md"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: steps.check.outputs.changed == 'true'
+        with:
+          name: weekly-prices
+          path: ${{ runner.temp }}/out/
+
+  # 开 PR 放在单独的 job：Codex 那一步拿不到有写权限的 token。只带走 prices.json。
+  pull-request:
+    needs: codex
+    if: needs.codex.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: weekly-prices
+          path: ${{ runner.temp }}/out
+
+      - name: 准备 PR 内容
+        id: prep
+        run: |
+          cp "$RUNNER_TEMP/out/prices.json" prices.json
+          python3 tools/validate_prices.py > /dev/null
+          echo "today=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+          {
+            echo "Codex 每周自动核对的雪票价格。合并前请抽查几条来源链接，没问题再 Merge。"
+            echo
+            cat "$RUNNER_TEMP/out/codex-summary.md"
+            echo
+            echo "<details><summary>validate_prices.py 输出</summary>"
+            echo
+            echo '```'
+            cat "$RUNNER_TEMP/out/validate.txt"
+            echo '```'
+            echo "</details>"
+          } > "$RUNNER_TEMP/body.md"
+
+      - uses: peter-evans/create-pull-request@v7
+        with:
+          branch: codex/weekly-prices
+          delete-branch: true
+          add-paths: prices.json
+          commit-message: 每周价格更新 ${{ steps.prep.outputs.today }}
+          title: 每周价格更新 ${{ steps.prep.outputs.today }}
+          body-path: ${{ runner.temp }}/body.md

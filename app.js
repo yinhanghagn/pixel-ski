@@ -40,6 +40,17 @@ let R = [], RBY = {};
 const fold = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
   .replace(/ß/g, 'ss').replace(/([aou])e/g, '$1').replace(/[^a-z0-9㐀-鿿]+/g, ' ').trim();
 
+// Extra search keywords, so "瑞士", "蒂罗尔", "Savoie" or "冰川" suggest something.
+const COUNTRY_KEYS = { AT: ['奥地利', 'Österreich', 'Austria'], CH: ['瑞士', 'Schweiz', 'Switzerland', 'Suisse'], FR: ['法国', 'France', 'Frankreich'] };
+const STATE_ZH = {
+  Tirol: '蒂罗尔', Salzburg: '萨尔茨堡', Vorarlberg: '福拉尔贝格', Steiermark: '施蒂利亚', Kärnten: '克恩顿',
+  Oberösterreich: '上奥地利', Niederösterreich: '下奥地利', Wallis: '瓦莱', Graubünden: '格劳宾登', Bern: '伯尔尼',
+  Uri: '乌里', Obwalden: '上瓦尔登', Waadt: '沃州', 'St. Gallen': '圣加仑', Savoie: '萨瓦', 'Haute-Savoie': '上萨瓦',
+  Isère: '伊泽尔', 'Hautes-Alpes': '上阿尔卑斯', 'Hautes-Pyrénées': '上比利牛斯',
+};
+const GLACIER_KEYS = ['冰川', 'Gletscher', 'Glacier'];
+const regionKeys = (c, st) => [st, STATE_ZH[st], ...(COUNTRY_KEYS[c] || [])];
+
 // Turn one prices.json entry into the shape the UI uses; null if it is unusable.
 function normResort(e) {
   if (!e || typeof e.id !== 'string' || !e.id || typeof e.name !== 'string' || typeof e.state !== 'string') return null;
@@ -57,6 +68,7 @@ function normResort(e) {
     open: okDate(e.open) ? e.open : null, close: okDate(e.close) ? e.close : null,
     dyn: !!e.dynamic, from: num(e.fromPrice) ? e.fromPrice : null, est: !!e.estimated,
     note: typeof e.note === 'string' ? e.note : '',
+    shop: typeof e.shop === 'string' && /^https?:\/\//.test(e.shop) ? e.shop : '',
     aliases: Array.isArray(e.aliases) ? e.aliases.filter(a => typeof a === 'string') : [],
     per: [],
   };
@@ -65,10 +77,13 @@ function normResort(e) {
       .map(p => ({ from: p.from, to: p.to, p: num(p.price) ? p.price : null, label: String(p.label || ''), multi: multi(p.multi) }));
     if (r.per.length !== e.periods.length) console.warn('prices.json: 有时段格式不对，已忽略', e.id);
   }
-  // search index
-  const keys = [[r.n, 'name'], ...r.aliases.map(a => [a, 'alias']), [r.x, 'sub'], [r.st, 'state']];
+  // search index: own names first, then broader keywords (region, country, "冰川")
+  const glacier = /gletscher|glacier/i.test([r.n, ...r.aliases].join(' '));
+  const keys = [[r.n, 'name'], ...r.aliases.map(a => [a, 'alias']), [r.x, 'sub'],
+    ...regionKeys(r.c, r.st).map(k => [k, 'region']), ...(glacier ? GLACIER_KEYS.map(k => [k, 'tag']) : [])];
   r._keys = keys.filter(k => k[0]).map(([raw, kind]) => { const f = fold(raw); return { raw, kind, f, c: f.replace(/ /g, ''), words: f.split(' ').filter(Boolean) }; });
   r._words = [...new Set(r._keys.flatMap(k => k.words))];
+  r._own = [...new Set(r._keys.filter(k => k.kind === 'name' || k.kind === 'alias' || k.kind === 'sub').flatMap(k => k.words))];
   return r;
 }
 
@@ -139,7 +154,10 @@ function priceOn(r, d, n = 1) {
 }
 const perDayEUR = (r, i, n) => toEUR(i.p, r.cur) / n;
 const tier = e => e == null ? 't-mid' : e <= PX.tiers.cheap ? 't-low' : e < PX.tiers.pricey ? 't-mid' : 't-high';
-const tagCls = (r, i, n) => i.s === 'open' ? tier(perDayEUR(r, i, n)) : i.s === 'dyn' ? 't-dyn' : 't-off';
+const tagCls = (r, i, n) => i.s === 'open' ? tier(perDayEUR(r, i, n)) : i.s === 'dyn' ? 't-dyn' : i.s === 'pre' ? 't-pre' : 't-off';
+const tagTxt = (r, i) => i.s === 'open' ? money(i.p, r.cur) : i.s === 'pre' ? `${fmtMD(r.open)}开季` : i.txt;
+// Before the season starts: the price on opening day, so the list still says what it will cost.
+const openingPrice = (r, n) => { const i = r.open ? priceOn(r, r.open, n) : null; return i && i.s === 'open' ? i : null; };
 
 /* ---------- fuzzy resort search ---------- */
 function lev(a, b, max) {
@@ -168,59 +186,106 @@ function scoreResort(r, qf) {
     if (k.c.startsWith(qc)) s = isName ? 100 : 85;
     else if (k.words.some(w => w.startsWith(qc))) s = isName ? 90 : 75;
     else if (k.c.includes(qc)) s = isName ? 70 : 55;
-    if (k.kind === 'state' && s) s -= 30;
+    // region / tag keywords only count from the start ("tir" → Tirol, but "arlb" must not hit Vorarlberg)
+    if (k.kind === 'region' || k.kind === 'tag') s = s >= 75 ? s - 30 : 0;
     if (s > best) { best = s; via = k; }
   }
   const toks = qf.split(' ').filter(Boolean);
   if (!best && toks.length > 1 && toks.every(t => r._words.some(w => w.startsWith(t)))) best = 50;
-  if (!best && /[a-z]/.test(qc) && qc.length >= 3) {
-    // typo tolerance: every token must be close to some word (or the start of one)
+  let fuzzy = false;
+  if (!best && /[a-z]/.test(qc) && qc.length >= 4) {
+    // typo tolerance on the resort's own names only: every token must be close to some word (or the start of one)
     let tot = 0;
-    for (const t of toks.filter(t => t.length >= 3)) {
+    for (const t of toks.filter(t => t.length >= 4)) {
       const lim = t.length >= 7 ? 2 : 1;
       let m = lim + 1;
-      for (const w of r._words) {
+      for (const w of r._own) {
         m = Math.min(m, lev(t, w, lim), w.length > t.length ? lev(t, w.slice(0, t.length), lim) : lim + 1);
         if (!m) break;
       }
       if (m > lim) { tot = 0; break; }
       tot += 30 - 8 * m;
     }
-    best = tot;
+    best = tot; fuzzy = true;
   }
-  return best > 0 ? { score: best, via: via && via.kind === 'alias' ? via.raw : null } : null;
+  if (!(best > 0)) return null;
+  const hint = via && via.kind === 'alias' ? `别名：${via.raw}` : via && via.kind === 'tag' ? via.raw : null;
+  return { score: best, via: hint, fuzzy };
 }
 function searchResorts(q, pool = R) {
   const qf = fold(q);
   if (!qf) return [];
-  return pool.map(r => ({ r, m: scoreResort(r, qf) })).filter(x => x.m)
-    .sort((a, b) => b.m.score - a.m.score || a.r.n.localeCompare(b.r.n, 'de'));
+  const hits = pool.map(r => ({ r, m: scoreResort(r, qf) })).filter(x => x.m);
+  // once something matches properly, drop the "did you mean" guesses
+  const sure = hits.filter(x => !x.m.fuzzy);
+  return (sure.length ? sure : hits).sort((a, b) => b.m.score - a.m.score || a.r.n.localeCompare(b.r.n, 'de'));
+}
+// Countries and regions whose name starts with the query, e.g. "tir" → Tirol, "瑞" → 瑞士.
+function searchRegions(q) {
+  const qc = fold(q).replace(/ /g, '');
+  if (!qc) return [];
+  const hit = keys => keys.some(k => k && fold(k).replace(/ /g, '').startsWith(qc));
+  const out = [];
+  for (const c of [...new Set(R.map(r => r.c))]) {
+    const n = R.filter(r => r.c === c).length;
+    if (hit(COUNTRY_KEYS[c] || [c])) out.push({ c, st: '全部', label: PX.countries[c] || c, n });
+  }
+  for (const st of [...new Set(R.map(r => r.st))]) {
+    const rs = R.filter(r => r.st === st);
+    if (hit([st, STATE_ZH[st]])) out.push({ c: rs[0].c, st, label: STATE_ZH[st] ? `${st}（${STATE_ZH[st]}）` : st, n: rs.length });
+  }
+  return out.slice(0, 2);
 }
 
+const POPULAR = ['arlberg', 'soelden', 'ischgl', 'kitz', 'zermatt', 'verbier', '3vallees', 'chamonix'];
+const shopLink = (r, cls = 'sg-shop') => r.shop ? `<a class="${cls}" href="${esc(r.shop)}" target="_blank" rel="noopener" title="${esc(r.n)} 官网">官网购票 ↗</a>` : '';
+
 // A dropdown of suggestions under a text input.
-function attachSuggest(input, { onPick, onType, max = 8 }) {
+// extra(r) adds HTML on the right of a resort; onRegion makes country / region keywords pickable too.
+function attachSuggest(input, { onPick, onType, onRegion, extra, max = 8 }) {
   const box = document.createElement('div');
   box.className = 'suggest'; box.setAttribute('role', 'listbox'); box.id = input.id + '-list'; box.hidden = true;
   input.parentElement.classList.add('sugwrap');
   input.parentElement.appendChild(box);
   input.setAttribute('role', 'combobox'); input.setAttribute('aria-autocomplete', 'list');
   input.setAttribute('aria-controls', box.id); input.setAttribute('aria-expanded', 'false'); input.autocomplete = 'off';
-  let items = [], act = -1;
+  let items = [], act = -1, head = '';
   const close = () => { box.hidden = true; input.setAttribute('aria-expanded', 'false'); };
+  const row = (it, k) => {
+    const a = `class="sg${it.g ? ' grp' : ''}${k === act ? ' act' : ''}" role="option" id="${box.id}-${k}" data-i="${k}" aria-selected="${k === act}"`;
+    if (it.g) return `<div ${a}><span class="sgt"><b>📍 ${esc(it.g.label)}</b><small>${it.g.st === '全部' ? '国家' : esc(PX.countries[it.g.c] || it.g.c)} · ${it.g.n} 家雪场 · 点一下只看这里</small></span></div>`;
+    const { r, m } = it;
+    const sub = [PX.countries[r.c] || r.c, r.st, m && m.via].filter(Boolean).map(esc).join(' · ');
+    return `<div ${a}><span class="sgt"><b>${esc(r.n)}</b><small>${sub}</small></span>${extra ? extra(r) : ''}</div>`;
+  };
   const draw = () => {
     if (!items.length) {
-      box.innerHTML = input.value.trim() ? `<div class="sg-empty">没有相近的雪场</div>` : '';
+      box.innerHTML = input.value.trim() ? `<div class="sg-empty">没有相近的雪场。试试村镇名、中文名或地区名（如“蒂罗尔”“瑞士”）</div>` : '';
       box.hidden = !input.value.trim(); input.setAttribute('aria-expanded', String(!box.hidden)); return;
     }
-    box.innerHTML = items.map(({ r, m }, k) => `<div class="sg${k === act ? ' act' : ''}" role="option" id="${box.id}-${k}" data-i="${k}" aria-selected="${k === act}">
-      <b>${esc(r.n)}</b><small>${esc([PX.countries[r.c] || r.c, r.st].join(' · '))}${m.via ? ` · 别名：${esc(m.via)}` : ''}</small></div>`).join('');
+    box.innerHTML = (head ? `<div class="sg-head">${head}</div>` : '') + items.map(row).join('');
     box.hidden = false; input.setAttribute('aria-expanded', 'true');
     if (act >= 0) input.setAttribute('aria-activedescendant', `${box.id}-${act}`); else input.removeAttribute('aria-activedescendant');
   };
-  const refresh = () => { items = searchResorts(input.value).slice(0, max); act = -1; draw(); };
-  const pick = k => { const it = items[k]; if (!it) return; input.value = it.r.n; close(); onPick(it.r); };
+  const refresh = () => {
+    const q = input.value.trim();
+    if (q) {
+      head = '';
+      const regions = onRegion ? searchRegions(q).map(g => ({ g })) : [];
+      items = [...regions, ...searchResorts(q).slice(0, max - regions.length)];
+    } else {
+      head = '热门雪场 · 输入雪场、村镇、地区或国家';
+      items = POPULAR.map(id => RBY[id]).filter(Boolean).map(r => ({ r, m: null }));
+    }
+    act = -1; draw();
+  };
+  const pick = k => {
+    const it = items[k]; if (!it) return;
+    close();
+    if (it.g) { input.value = ''; onRegion(it.g); } else { input.value = it.r.n; onPick(it.r); }
+  };
   input.addEventListener('input', () => { if (onType) onType(input.value); refresh(); });
-  input.addEventListener('focus', () => { if (input.value.trim()) refresh(); });
+  input.addEventListener('focus', refresh);
   input.addEventListener('blur', () => setTimeout(close, 150));
   input.addEventListener('keydown', e => {
     if (box.hidden || !items.length) return;
@@ -229,7 +294,8 @@ function attachSuggest(input, { onPick, onType, max = 8 }) {
     else if (e.key === 'Enter') { pick(act >= 0 ? act : 0); e.preventDefault(); }
     else if (e.key === 'Escape') close();
   });
-  box.addEventListener('mousedown', e => { e.preventDefault(); const o = e.target.closest('[data-i]'); if (o) pick(+o.dataset.i); });
+  // keep focus in the input; a tap on the "官网" link opens the shop instead of picking the resort
+  box.addEventListener('mousedown', e => { e.preventDefault(); if (e.target.closest('a')) return; const o = e.target.closest('[data-i]'); if (o) pick(+o.dataset.i); });
 }
 
 /* ---------- pixel sprites ---------- */
@@ -272,7 +338,7 @@ function renderFilters() {
   $('#ticket').innerHTML = PX.durations.map(n => `<option value="${n}"${n === UI.n ? ' selected' : ''}>${ticketName(n)}</option>`).join('');
   const t = PX.tiers;
   $('#legend').innerHTML = `<span>按每天折合欧元：</span><span><i class="t-low"></i>≤ ${t.cheap} €</span><span><i class="t-mid"></i>${t.cheap}–${t.pricey} €</span><span><i class="t-high"></i>≥ ${t.pricey} €</span>
-    <span><i class="t-dyn"></i>动态定价</span><span><i class="t-off"></i>未开 / 已闭 / 暂无数据</span>`;
+    <span><i class="t-dyn"></i>动态定价</span><span><i class="t-pre"></i>还没开季</span><span><i class="t-off"></i>已闭季 / 暂无数据</span>`;
   const di = $('#date'); di.min = PX.range.from; di.max = PX.range.to;
   if (PX.season) $('#tagline').textContent = `阿尔卑斯 ${PX.season} 雪季 · 雪票价格 + 我的雪季记录`;
 }
@@ -285,15 +351,21 @@ function monthsFor(r) {
   while (`${y}-${pad(m)}` <= hi.slice(0, 7) && out.length < 12) { out.push([y, m]); m++; if (m > 12) { m = 1; y++; } }
   return out;
 }
+// Month grids like a flight-search calendar: the date on top, that day's price underneath.
 function calendar(r, n) {
-  return `<div class="cal">` + monthsFor(r).map(([y, m]) => {
+  const today = localToday();
+  const short = v => String(Math.round(v));
+  const head = `<p class="note">${ticketName(n)}每日价格（${r.cur === 'EUR' ? '€' : r.cur}，四舍五入）· 点日期切换：</p>`;
+  return head + `<div class="cal">` + monthsFor(r).map(([y, m]) => {
     const first = parse(`${y}-${pad(m)}-01`), days = new Date(Date.UTC(y, m, 0)).getUTCDate();
     const lead = (first.getUTCDay() + 6) % 7;
     let cells = ['一', '二', '三', '四', '五', '六', '日'].map(w => `<span class="wd">${w}</span>`).join('') + '<span></span>'.repeat(lead);
     for (let d = 1; d <= days; d++) {
       const ds = `${y}-${pad(m)}-${pad(d)}`, i = priceOn(r, ds, n);
       const lab = i.s === 'open' ? money(i.p, r.cur) : i.txt;
-      cells += `<button class="cell ${tagCls(r, i, n)}${ds === UI.date ? ' sel' : ''}" data-day="${ds}" title="${fmtDate(ds)} · ${lab}" aria-label="${fmtDate(ds)} ${lab}">${d}</button>`;
+      const cls = i.s === 'open' ? tagCls(r, i, n) : 'c-none';
+      cells += `<button class="cell ${cls}${ds === UI.date ? ' sel' : ''}${ds === today ? ' today' : ''}" data-day="${ds}" title="${fmtDate(ds)} · ${lab}" aria-label="${fmtDate(ds)} ${lab}">`
+        + `<span class="dn">${d}</span><span class="dp num">${i.s === 'open' ? short(i.p) : '–'}</span></button>`;
     }
     return `<div class="month"><h4>${y}年${m}月</h4><div class="mgrid">${cells}</div></div>`;
   }).join('') + `</div>`;
@@ -315,6 +387,8 @@ function detail(r) {
     head += `${money(i.p, r.cur)}${n > 1 ? `（每天 ${money(i.p / n, r.cur)}）` : ''}${i.l ? ` · ${esc(i.l)}` : ''}`;
     if (r.cur !== 'EUR' && toEUR(i.p, r.cur) != null) head += ` · 约 ${eur(toEUR(i.p, r.cur))}`;
   } else head += i.txt;
+  const op = i.s === 'pre' ? openingPrice(r, n) : null;
+  if (op) head += ` · 开季当天 ${money(op.p, r.cur)}`;
   bits.push(`<p>${head}</p>`);
   bits.push(`<p class="note">开季：${r.open ? fmtDate(r.open) : '未公布'} · 闭季：${r.close ? fmtDate(r.close) : '未公布'}</p>`);
   bits.push(ticketTable(r));
@@ -329,7 +403,8 @@ function detail(r) {
   if (r.dyn) bits.push(`<p class="note">动态定价：价格随日期和需求变化，越早在官网买越便宜${r.from != null ? `，官网约 ${money(r.from, r.cur)} 起` : ''}。</p>`);
   if (r.note) bits.push(`<p class="note">${esc(r.note)}</p>`);
   if (!r.dyn && (r.p != null || Object.keys(r.multi).length)) bits.push(calendar(r, n));
-  bits.push(`<div class="bar"><button class="btn gold sm" data-log="${esc(r.id)}">我在 ${fmtDate(UI.date)} 滑了这里${n > 1 ? `（${n} 天票）` : ''} → 记一笔</button></div>`);
+  bits.push(`<div class="bar">${shopLink(r, 'btn mint sm')}<button class="btn gold sm" data-log="${esc(r.id)}">我在 ${fmtDate(UI.date)} 滑了这里${n > 1 ? `（${n} 天票）` : ''} → 记一笔</button></div>`);
+  if (r.shop) bits.push(`<p class="note">“官网购票”会打开 ${esc(r.n)} 的官方网站，很多雪场在官网提前买比售票处便宜。</p>`);
   return `<div class="detail">${bits.filter(Boolean).join('')}</div>`;
 }
 function renderPrices() {
@@ -342,12 +417,17 @@ function renderPrices() {
   const d = UI.date, n = UI.n;
   const pool = R.filter(r => (UI.country === 'all' || r.c === UI.country) && (UI.st === '全部' || r.st === UI.st));
   const matches = UI.q ? searchResorts(UI.q, pool) : pool.map(r => ({ r, m: null }));
-  const rows = matches.map(({ r, m }) => ({ r, m, i: priceOn(r, d, n) }));
-  const rank = i => i.s === 'open' ? 0 : i.s === 'dyn' ? 1 : i.s === 'na' || i.s === 'nomulti' ? 2 : 3;
+  const rows = matches.map(({ r, m }) => {
+    const i = priceOn(r, d, n);
+    return { r, m, i, op: i.s === 'pre' ? openingPrice(r, n) : null };
+  });
+  const rank = i => i.s === 'open' ? 0 : i.s === 'dyn' ? 1 : i.s === 'pre' ? 2 : i.s === 'na' || i.s === 'nomulti' ? 3 : 4;
+  const sortEUR = x => x.i.s === 'open' ? perDayEUR(x.r, x.i, n) : x.op ? perDayEUR(x.r, x.op, n) : null;
   if (!UI.q) rows.sort((a, b) => {
     if (UI.sort === 'name') return a.r.n.localeCompare(b.r.n, 'de');
+    const ea = sortEUR(a), eb = sortEUR(b);
     return rank(a.i) - rank(b.i)
-      || (a.i.s === 'open' ? (UI.sort === 'asc' ? 1 : -1) * (perDayEUR(a.r, a.i, n) - perDayEUR(b.r, b.i, n)) : 0)
+      || (ea != null && eb != null ? (UI.sort === 'asc' ? 1 : -1) * (ea - eb) : (ea == null) - (eb == null))
       || a.r.n.localeCompare(b.r.n, 'de');
   });
   const open = rows.filter(x => x.i.s === 'open' && perDayEUR(x.r, x.i, n) != null);
@@ -356,17 +436,29 @@ function renderPrices() {
   const tile = (label, x) => `<div class="sumtile"><small>${label}${n > 1 ? `（${n} 天票）` : ''}</small><b class="num">${x ? money(x.i.p, x.r.cur) : '–'}</b><small>${x ? esc(x.r.n) + (n > 1 ? ` · 每天 ${money(x.i.p / n, x.r.cur)}` : '') : '这天没有可查的价格'}</small></div>`;
   $('#summary').innerHTML = `
     <div class="sumtile"><small>${fmtDate(d)}${n > 1 ? ' 出发' : ''}</small><b class="num">${open.length}<span style="font-size:14px"> 家有价</span></b><small>共 ${rows.length} 家${UI.q ? '匹配' : ''}</small></div>
-    ${tile('最便宜', lo)}${tile('最贵', hi)}`;
-  $('#list').innerHTML = rows.length ? rows.map(({ r, m, i }) => {
+    ${tile('最便宜', lo)}${tile('最贵', hi)}${preseasonHint(rows)}`;
+  $('#list').innerHTML = rows.length ? rows.map(({ r, m, i, op }) => {
     const ex = UI.open === r.id;
-    const sub = [UI.country === 'all' ? PX.countries[r.c] || r.c : '', r.st, r.x, m && m.via ? `别名：${m.via}` : '',
+    const sub = [UI.country === 'all' ? PX.countries[r.c] || r.c : '', r.st, r.x, m && m.via,
       i.s === 'open' && n > 1 ? `每天 ${money(i.p / n, r.cur)}` : '', i.s === 'open' && i.l ? i.l : '',
+      op ? `开季后 ${money(op.p, r.cur)}` : '',
       i.s === 'dyn' && r.from != null ? `约 ${money(r.from, r.cur)} 起` : '', !r.open && i.s === 'open' ? '开季日未公布' : ''].filter(Boolean).map(esc).join(' · ');
     return `<div class="item"><button class="row" data-id="${esc(r.id)}" aria-expanded="${ex}">
       <span class="rname"><b>${esc(r.n)}</b><small>${sub}</small></span>
-      <span class="tag ${tagCls(r, i, n)}">${i.s === 'open' ? money(i.p, r.cur) : i.txt}</span><span class="chev">›</span></button>
+      <span class="tag ${tagCls(r, i, n)}">${tagTxt(r, i)}</span><span class="chev">›</span></button>
       ${ex ? detail(r) : ''}</div>`;
   }).join('') : `<p class="empty">${UI.q ? '没找到相近的雪场。试试只输入名字的前几个字母，或者换成村镇名。' : '这个筛选下没有雪场。'}</p>`;
+}
+// Early in the season most resorts are still closed: offer a jump to the first weekend most of them are open.
+function preseasonHint(rows) {
+  const pre = rows.filter(x => x.i.s === 'pre');
+  if (!pre.length || pre.length * 3 < rows.length) return '';
+  const opens = pre.map(x => x.r.open).sort();
+  let target = opens[Math.min(opens.length - 1, Math.floor(opens.length * 0.75))];
+  while (parse(target).getUTCDay() !== 6) target = addDays(target, 1);
+  target = clampDate(target);
+  return `<div class="hintbar"><span>这天还有 <b>${pre.length}</b> 家雪场没开季，所以大多显示开季日期。大部分雪场开门后的第一个周六是 ${fmtDate(target)}。</span>
+    <button class="btn sm gold" data-jump="${target}">看 ${fmtMD(target)} 的价格 →</button></div>`;
 }
 
 /* ---------- my season: data ---------- */
@@ -768,9 +860,15 @@ function boot() {
       if (UI.country !== 'all' && r.c !== UI.country) { UI.country = 'all'; renderFilters(); }
       renderPrices();
     },
+    onRegion: g => { UI.q = ''; UI.country = g.c; UI.st = g.st; renderFilters(); renderPrices(); },
+    extra: r => { const i = priceOn(r, UI.date, UI.n); return `<span class="tag ${tagCls(r, i, UI.n)}">${tagTxt(r, i)}</span>${shopLink(r)}`; },
+  });
+  $('#summary').addEventListener('click', e => {
+    const j = e.target.closest('[data-jump]'); if (j) { UI.date = j.dataset.jump; renderPrices(); }
   });
   $('#sort').addEventListener('change', e => { UI.sort = e.target.value; renderPrices(); });
   $('#list').addEventListener('click', e => {
+    if (e.target.closest('a')) return;
     const cell = e.target.closest('[data-day]'); if (cell) { UI.date = cell.dataset.day; renderPrices(); return; }
     const lg = e.target.closest('[data-log]'); if (lg) { prefillLog(lg.dataset.log, UI.date); return; }
     const row = e.target.closest('.row'); if (row) { UI.open = UI.open === row.dataset.id ? null : row.dataset.id; renderPrices(); }

@@ -100,6 +100,7 @@
     {
       "id": "arlberg",
       "name": "Ski Arlberg",
+      "shop": "https://www.skiarlberg.at",
       "sub": "St. Anton · Lech Zürs · Warth-Schröcken",
       "country": "AT",
       "state": "Tirol",
@@ -119,6 +120,7 @@
     {
       "id": "soelden",
       "name": "Sölden",
+      "shop": "https://www.soelden.com",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -143,6 +145,7 @@
     {
       "id": "ischgl",
       "name": "Ischgl / Samnaun",
+      "shop": "https://www.ischgl.com",
       "sub": "Silvretta Arena",
       "country": "AT",
       "state": "Tirol",
@@ -162,6 +165,7 @@
     {
       "id": "kitz",
       "name": "KitzSki Kitzbühel / Kirchberg",
+      "shop": "https://www.kitzski.at",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -183,6 +187,7 @@
     {
       "id": "mayrhofen",
       "name": "Mayrhofen",
+      "shop": "https://www.mayrhofner-bergbahnen.com",
       "sub": "Mountopolis",
       "country": "AT",
       "state": "Tirol",
@@ -197,6 +202,7 @@
     {
       "id": "zillarena",
       "name": "Zillertal Arena",
+      "shop": "https://www.zillertalarena.com",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -210,6 +216,7 @@
     {
       "id": "hochzillertal",
       "name": "Hochzillertal / Hochfügen",
+      "shop": "https://www.hochzillertal.com",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -220,6 +227,7 @@
     {
       "id": "spieljoch",
       "name": "Spieljoch Fügen",
+      "shop": "https://www.spieljochbahn.at",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -231,6 +239,7 @@
     {
       "id": "hintertux",
       "name": "Hintertuxer Gletscher",
+      "shop": "https://www.hintertuxergletscher.at",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -244,6 +253,7 @@
     {
       "id": "sfl",
       "name": "Serfaus-Fiss-Ladis",
+      "shop": "https://www.serfaus-fiss-ladis.at",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -264,6 +274,7 @@
     {
       "id": "skiwelt",
       "name": "SkiWelt Wilder Kaiser-Brixental",
+      "shop": "https://www.skiwelt.at/en/ski-passes.html",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -285,6 +296,7 @@
     {
       "id": "pitztal",
       "name": "Pitztaler Gletscher & Rifflsee",
+      "shop": "https://www.pitztaler-gletscher.at",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -297,6 +309,7 @@
     {
       "id": "kaunertal",
       "name": "Kaunertaler Gletscher",
+      "shop": "https://www.kaunertaler-gletscher.at",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -309,6 +322,7 @@
     {
       "id": "stubai",
       "name": "Stubaier Gletscher",
+      "shop": "https://www.stubaier-gletscher.com/en/ski-area/prices/",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -328,6 +342,7 @@
     {
       "id": "kals",
       "name": "Großglockner Resort Kals-Matrei",
+      "shop": "https://www.gg-resort.at",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -336,6 +351,7 @@
     {
       "id": "lienz",
       "name": "Lienz Zettersfeld",
+      "shop": "https://www.lienzer-bergbahnen.at",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -344,6 +360,7 @@
     {
       "id": "sillian",
       "name": "Sillian Thurntaler",
+      "shop": "https://www.hochpustertal.com",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -352,6 +369,7 @@
     {
       "id": "stjakob",
       "name": "St. Jakob im Defereggental",
+      "shop": "https://www.stjakob.at",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -360,6 +378,7 @@
     {
       "id": "kappl",
       "name": "Kappl & See",
+      "shop": "https://www.kappl-see.com",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -368,6 +387,7 @@
     {
       "id": "juwel",
       "name": "Ski Juwel Alpbachtal Wildschönau",
+      "shop": "https://www.skijuwel.com",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -384,6 +404,7 @@
     {
       "id": "ehrwald",
       "name": "Ehrwald · Lermoos · Biberwier",
+      "shop": "https://www.zugspitzarena.com",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -393,6 +414,7 @@
     {
       "id": "berwang",
       "name": "Berwang / Bichlbach / Rinnen",
+      "shop": "https://www.bergbahnen-berwang.at",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -401,6 +423,7 @@
     {
       "id": "nauders",
       "name": "Nauders Bergkastel",
+      "shop": "https://www.nauders.com",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -410,6 +433,7 @@
     {
       "id": "gurgl",
       "name": "Obergurgl-Hochgurgl",
+      "shop": "https://www.gurgl.com",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -431,6 +455,7 @@
     {
       "id": "hochzeiger",
       "name": "Hochzeiger Jerzens",
+      "shop": "https://www.hochzeiger.com",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -440,6 +465,7 @@
     {
       "id": "christlum",
       "name": "Christlum Achenkirch",
+      "shop": "https://www.christlum.at",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -448,6 +474,7 @@
     {
       "id": "steinplatte",
       "name": "Steinplatte Winklmoosalm",
+      "shop": "https://www.steinplatte.tirol",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -456,6 +483,7 @@
     {
       "id": "stjohann",
       "name": "St. Johann in Tirol",
+      "shop": "https://www.bergbahnen-stjohann.at",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -466,6 +494,7 @@
     {
       "id": "kuehtai",
       "name": "Kühtai / Hochoetz",
+      "shop": "https://www.kuehtai.info",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -484,6 +513,7 @@
     {
       "id": "galtuer",
       "name": "Galtür Silvapark",
+      "shop": "https://www.galtuer.com",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -492,6 +522,7 @@
     {
       "id": "seefeld",
       "name": "Rosshütte Seefeld",
+      "shop": "https://www.rosshuette.at",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -501,6 +532,7 @@
     {
       "id": "schlick",
       "name": "Schlick 2000",
+      "shop": "https://www.schlick2000.at",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -510,6 +542,7 @@
     {
       "id": "bergeralm",
       "name": "Bergeralm Steinach",
+      "shop": "https://www.bergeralm.net",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -518,6 +551,7 @@
     {
       "id": "vent",
       "name": "Vent",
+      "shop": "https://www.vent.at",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -526,6 +560,7 @@
     {
       "id": "buchenstein",
       "name": "Buchensteinwand Pillersee",
+      "shop": "https://www.bergbahn-pillersee.at",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -534,6 +569,7 @@
     {
       "id": "venet",
       "name": "Venet Landeck / Zams",
+      "shop": "https://www.venet.at",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -542,6 +578,7 @@
     {
       "id": "axams",
       "name": "Axamer Lizum",
+      "shop": "https://www.axamer-lizum.at",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -552,6 +589,7 @@
     {
       "id": "hochkoessen",
       "name": "Hochkössen",
+      "shop": "https://www.hochkoessen.at",
       "country": "AT",
       "state": "Tirol",
       "currency": "EUR",
@@ -561,6 +599,7 @@
     {
       "id": "saalbach",
       "name": "Skicircus Saalbach",
+      "shop": "https://www.saalbach.com",
       "sub": "Hinterglemm · Leogang · Fieberbrunn",
       "country": "AT",
       "state": "Salzburg",
@@ -580,6 +619,7 @@
     {
       "id": "kitzsteinhorn",
       "name": "Kitzsteinhorn / Maiskogel",
+      "shop": "https://www.kitzsteinhorn.at",
       "sub": "Kaprun",
       "country": "AT",
       "state": "Salzburg",
@@ -599,6 +639,7 @@
     {
       "id": "schmitten",
       "name": "Schmittenhöhe Zell am See",
+      "shop": "https://www.schmitten.at",
       "country": "AT",
       "state": "Salzburg",
       "currency": "EUR",
@@ -616,6 +657,7 @@
     {
       "id": "gastein",
       "name": "Ski Gastein",
+      "shop": "https://www.skigastein.com",
       "sub": "Bad Gastein · Bad Hofgastein · Sportgastein",
       "country": "AT",
       "state": "Salzburg",
@@ -635,6 +677,7 @@
     {
       "id": "dorfgastein",
       "name": "Dorfgastein / Großarltal",
+      "shop": "https://tickets.skischaukel.at",
       "country": "AT",
       "state": "Salzburg",
       "currency": "EUR",
@@ -645,6 +688,7 @@
     {
       "id": "snowspace",
       "name": "Snow Space Salzburg",
+      "shop": "https://www.snow-space.com",
       "sub": "Flachau · Wagrain · St. Johann",
       "country": "AT",
       "state": "Salzburg",
@@ -666,6 +710,7 @@
     {
       "id": "zauchensee",
       "name": "Zauchensee / Flachauwinkl",
+      "shop": "https://www.zauchensee.at",
       "country": "AT",
       "state": "Salzburg",
       "currency": "EUR",
@@ -679,6 +724,7 @@
     {
       "id": "kleinarl",
       "name": "Flachauwinkl / Kleinarl",
+      "shop": "https://www.shuttleberg.com",
       "country": "AT",
       "state": "Salzburg",
       "currency": "EUR",
@@ -688,6 +734,7 @@
     {
       "id": "hochkoenig",
       "name": "Hochkönig",
+      "shop": "https://www.hochkoenig.at",
       "country": "AT",
       "state": "Salzburg",
       "currency": "EUR",
@@ -706,6 +753,7 @@
     {
       "id": "radstadt",
       "name": "Radstadt / Altenmarkt",
+      "shop": "https://www.radstadt.com",
       "country": "AT",
       "state": "Salzburg",
       "currency": "EUR",
@@ -716,6 +764,7 @@
     {
       "id": "dachsteinwest",
       "name": "Dachstein West",
+      "shop": "https://www.dachstein-west.at",
       "sub": "Gosau · Russbach · Annaberg",
       "country": "AT",
       "state": "Salzburg",
@@ -727,6 +776,7 @@
     {
       "id": "obertauern",
       "name": "Obertauern",
+      "shop": "https://www.ski-obertauern.at/en/ski-pass/ski-pass-prices",
       "country": "AT",
       "state": "Salzburg",
       "currency": "EUR",
@@ -748,6 +798,7 @@
     {
       "id": "wildkogel",
       "name": "Wildkogel",
+      "shop": "https://www.wildkogel-arena.at",
       "country": "AT",
       "state": "Salzburg",
       "currency": "EUR",
@@ -756,6 +807,7 @@
     {
       "id": "filzmoos",
       "name": "Filzmoos",
+      "shop": "https://www.bergbahnen-filzmoos.at",
       "country": "AT",
       "state": "Salzburg",
       "currency": "EUR",
@@ -764,6 +816,7 @@
     {
       "id": "rauris",
       "name": "Rauriser Hochalmbahnen",
+      "shop": "https://www.hochalmbahnen.at",
       "country": "AT",
       "state": "Salzburg",
       "currency": "EUR",
@@ -772,6 +825,7 @@
     {
       "id": "lofer",
       "name": "Almenwelt Lofer",
+      "shop": "https://www.almenwelt-lofer.com",
       "country": "AT",
       "state": "Salzburg",
       "currency": "EUR",
@@ -781,6 +835,7 @@
     {
       "id": "fanningberg",
       "name": "Fanningberg",
+      "shop": "https://www.fanningberg.info",
       "country": "AT",
       "state": "Salzburg",
       "currency": "EUR",
@@ -789,6 +844,7 @@
     {
       "id": "werfenweng",
       "name": "Werfenweng",
+      "shop": "https://www.werfenweng.eu",
       "country": "AT",
       "state": "Salzburg",
       "currency": "EUR",
@@ -797,6 +853,7 @@
     {
       "id": "weisssee",
       "name": "Weißsee Gletscherwelt",
+      "shop": "https://www.weissee.com",
       "country": "AT",
       "state": "Salzburg",
       "currency": "EUR",
@@ -805,6 +862,7 @@
     {
       "id": "damuels",
       "name": "Damüls Mellau",
+      "shop": "https://www.damuels-mellau.at",
       "country": "AT",
       "state": "Vorarlberg",
       "currency": "EUR",
@@ -826,6 +884,7 @@
     {
       "id": "kleinwalsertal",
       "name": "Oberstdorf-Kleinwalsertal",
+      "shop": "https://www.ok-bergbahnen.com",
       "sub": "Ifen · Fellhorn/Kanzelwand · Walmendingerhorn",
       "country": "AT",
       "state": "Vorarlberg",
@@ -836,6 +895,7 @@
     {
       "id": "diedamskopf",
       "name": "Diedamskopf",
+      "shop": "https://www.diedamskopf.at",
       "country": "AT",
       "state": "Vorarlberg",
       "currency": "EUR",
@@ -844,6 +904,7 @@
     {
       "id": "sonnenkopf",
       "name": "Sonnenkopf Klösterle",
+      "shop": "https://www.sonnenkopf.com",
       "country": "AT",
       "state": "Vorarlberg",
       "currency": "EUR",
@@ -852,6 +913,7 @@
     {
       "id": "laterns",
       "name": "Laterns Gapfohl",
+      "shop": "https://www.laterns.at",
       "country": "AT",
       "state": "Vorarlberg",
       "currency": "EUR",
@@ -860,6 +922,7 @@
     {
       "id": "boedele",
       "name": "Bödele Schwarzenberg",
+      "shop": "https://www.boedele.info",
       "country": "AT",
       "state": "Vorarlberg",
       "currency": "EUR",
@@ -869,6 +932,7 @@
     {
       "id": "montafon",
       "name": "Silvretta Montafon",
+      "shop": "https://www.silvretta-montafon.at",
       "country": "AT",
       "state": "Vorarlberg",
       "currency": "EUR",
@@ -879,6 +943,7 @@
     {
       "id": "gargellen",
       "name": "Gargellen",
+      "shop": "https://www.montafon.at/gargellen/de",
       "country": "AT",
       "state": "Vorarlberg",
       "currency": "EUR",
@@ -888,6 +953,7 @@
     {
       "id": "brandnertal",
       "name": "Brandnertal",
+      "shop": "https://www.vorarlberg-alpenregion.at/brandnertal/de/unsere-bergbahnen/bergbahnen-brandnertal",
       "country": "AT",
       "state": "Vorarlberg",
       "currency": "EUR",
@@ -897,6 +963,7 @@
     {
       "id": "golm",
       "name": "Golm",
+      "shop": "https://www.golm.at",
       "country": "AT",
       "state": "Vorarlberg",
       "currency": "EUR",
@@ -906,6 +973,7 @@
     {
       "id": "schladming",
       "name": "Schladming-Dachstein 4-Berge",
+      "shop": "https://www.planai.at",
       "country": "AT",
       "state": "Steiermark",
       "currency": "EUR",
@@ -924,6 +992,7 @@
     {
       "id": "turrach",
       "name": "Turracher Höhe",
+      "shop": "https://www.turracherhoehe.at",
       "country": "AT",
       "state": "Steiermark",
       "currency": "EUR",
@@ -932,6 +1001,7 @@
     {
       "id": "kreischberg",
       "name": "Kreischberg",
+      "shop": "https://www.kreischberg.at",
       "country": "AT",
       "state": "Steiermark",
       "currency": "EUR",
@@ -949,6 +1019,7 @@
     {
       "id": "tauplitz",
       "name": "Die Tauplitz",
+      "shop": "https://www.dietauplitz.com",
       "country": "AT",
       "state": "Steiermark",
       "currency": "EUR",
@@ -958,6 +1029,7 @@
     {
       "id": "loser",
       "name": "Loser Altaussee",
+      "shop": "https://www.loser.at",
       "country": "AT",
       "state": "Steiermark",
       "currency": "EUR",
@@ -966,6 +1038,7 @@
     {
       "id": "lachtal",
       "name": "Lachtal",
+      "shop": "https://www.lachtal.at",
       "country": "AT",
       "state": "Steiermark",
       "currency": "EUR",
@@ -974,6 +1047,7 @@
     {
       "id": "planneralm",
       "name": "Planneralm",
+      "shop": "https://www.planneralm.at",
       "country": "AT",
       "state": "Steiermark",
       "currency": "EUR",
@@ -982,6 +1056,7 @@
     {
       "id": "riesneralm",
       "name": "Riesneralm",
+      "shop": "https://www.riesneralm.at",
       "country": "AT",
       "state": "Steiermark",
       "currency": "EUR",
@@ -990,6 +1065,7 @@
     {
       "id": "praebichl",
       "name": "Präbichl",
+      "shop": "https://www.praebichl.at",
       "country": "AT",
       "state": "Steiermark",
       "currency": "EUR",
@@ -998,6 +1074,7 @@
     {
       "id": "bkk",
       "name": "Bad Kleinkirchheim",
+      "shop": "https://www.badkleinkirchheim.com",
       "country": "AT",
       "state": "Kärnten",
       "currency": "EUR",
@@ -1016,6 +1093,7 @@
     {
       "id": "gerlitzen",
       "name": "Gerlitzen",
+      "shop": "https://www.gerlitzen.com",
       "country": "AT",
       "state": "Kärnten",
       "currency": "EUR",
@@ -1025,6 +1103,7 @@
     {
       "id": "katschberg",
       "name": "Katschberg",
+      "shop": "https://www.katschi.at",
       "country": "AT",
       "state": "Kärnten",
       "currency": "EUR",
@@ -1043,6 +1122,7 @@
     {
       "id": "nassfeld",
       "name": "Nassfeld",
+      "shop": "https://www.nassfeld.at",
       "country": "AT",
       "state": "Kärnten",
       "currency": "EUR",
@@ -1061,6 +1141,7 @@
     {
       "id": "moelltal",
       "name": "Mölltaler Gletscher",
+      "shop": "https://www.moelltaler-gletscher.at",
       "country": "AT",
       "state": "Kärnten",
       "currency": "EUR",
@@ -1072,6 +1153,7 @@
     {
       "id": "goldeck",
       "name": "Goldeck Spittal",
+      "shop": "https://www.goldeck.com",
       "country": "AT",
       "state": "Kärnten",
       "currency": "EUR",
@@ -1081,6 +1163,7 @@
     {
       "id": "petzen",
       "name": "Petzen",
+      "shop": "https://www.petzen.at",
       "country": "AT",
       "state": "Kärnten",
       "currency": "EUR",
@@ -1090,6 +1173,7 @@
     {
       "id": "klippitz",
       "name": "Klippitztörl",
+      "shop": "https://www.klippitztoerl.at",
       "country": "AT",
       "state": "Kärnten",
       "currency": "EUR",
@@ -1098,6 +1182,7 @@
     {
       "id": "koralpe",
       "name": "Koralpe",
+      "shop": "https://www.koralpe.at",
       "country": "AT",
       "state": "Kärnten",
       "currency": "EUR",
@@ -1106,6 +1191,7 @@
     {
       "id": "heiligenblut",
       "name": "Großglockner Heiligenblut",
+      "shop": "https://www.grossglockner-heiligenblut.at",
       "country": "AT",
       "state": "Kärnten",
       "currency": "EUR",
@@ -1114,6 +1200,7 @@
     {
       "id": "kasberg",
       "name": "Kasberg Grünau",
+      "shop": "https://www.kasberg.at",
       "country": "AT",
       "state": "Oberösterreich",
       "currency": "EUR",
@@ -1124,6 +1211,7 @@
     {
       "id": "hinterstoder",
       "name": "Hinterstoder / Wurzeralm",
+      "shop": "https://www.hiwu.at",
       "country": "AT",
       "state": "Oberösterreich",
       "currency": "EUR",
@@ -1134,6 +1222,7 @@
     {
       "id": "hochficht",
       "name": "Hochficht",
+      "shop": "https://www.hochficht.at",
       "country": "AT",
       "state": "Oberösterreich",
       "currency": "EUR",
@@ -1143,6 +1232,7 @@
     {
       "id": "hochkar",
       "name": "Hochkar",
+      "shop": "https://www.hochkar.com",
       "country": "AT",
       "state": "Niederösterreich",
       "currency": "EUR",
@@ -1152,6 +1242,7 @@
     {
       "id": "oetscher",
       "name": "Ötscher Lackenhof",
+      "shop": "https://www.oetscher.at",
       "country": "AT",
       "state": "Niederösterreich",
       "currency": "EUR",
@@ -1161,6 +1252,7 @@
     {
       "id": "semmering",
       "name": "Semmering Hirschenkogel",
+      "shop": "https://www.zauberberg.at",
       "country": "AT",
       "state": "Niederösterreich",
       "currency": "EUR",
@@ -1170,6 +1262,7 @@
     {
       "id": "zermatt",
       "name": "Zermatt",
+      "shop": "https://www.matterhornparadise.ch",
       "sub": "Matterhorn ski paradise",
       "country": "CH",
       "state": "Wallis",
@@ -1185,6 +1278,7 @@
     {
       "id": "verbier",
       "name": "Verbier 4 Vallées",
+      "shop": "https://www.verbier4vallees.ch",
       "sub": "Verbier, Nendaz, Veysonnaz, Thyon, La Tzoumaz",
       "country": "CH",
       "state": "Wallis",
@@ -1198,6 +1292,7 @@
     {
       "id": "stmoritz",
       "name": "St. Moritz",
+      "shop": "https://www.mountains.ch",
       "sub": "Engadin St. Moritz Mountains: Corviglia, Corvatsch, Diavolezza",
       "country": "CH",
       "state": "Graubünden",
@@ -1210,6 +1305,7 @@
     {
       "id": "davos",
       "name": "Davos Klosters",
+      "shop": "https://www.davosklostersmountains.ch",
       "sub": "Parsenn, Jakobshorn, Pischa, Madrisa, Rinerhorn",
       "country": "CH",
       "state": "Graubünden",
@@ -1223,6 +1319,7 @@
     {
       "id": "laax",
       "name": "Flims Laax Falera",
+      "shop": "https://www.laax.com/en/tickets",
       "sub": "LAAX",
       "country": "CH",
       "state": "Graubünden",
@@ -1235,6 +1332,7 @@
     {
       "id": "aroslenz",
       "name": "Arosa Lenzerheide",
+      "shop": "https://arosalenzerheide.swiss",
       "country": "CH",
       "state": "Graubünden",
       "currency": "CHF",
@@ -1247,6 +1345,7 @@
     {
       "id": "saasfee",
       "name": "Saas-Fee",
+      "shop": "https://www.saas-fee.ch",
       "sub": "Saas-Fee & Saas-Almagell",
       "country": "CH",
       "state": "Wallis",
@@ -1260,6 +1359,7 @@
     {
       "id": "andermatt",
       "name": "Andermatt+Sedrun+Disentis",
+      "shop": "https://www.andermatt-sedrun-disentis.ch",
       "sub": "SkiArena Andermatt-Sedrun-Disentis",
       "country": "CH",
       "state": "Uri",
@@ -1272,6 +1372,7 @@
     {
       "id": "jungfrau",
       "name": "Jungfrau Ski Region",
+      "shop": "https://www.jungfrau.ch",
       "sub": "Grindelwald-First, Kleine Scheidegg-Männlichen, Mürren-Schilthorn",
       "country": "CH",
       "state": "Bern",
@@ -1285,6 +1386,7 @@
     {
       "id": "adelboden",
       "name": "Adelboden-Lenk",
+      "shop": "https://www.adelboden-lenk.ch",
       "sub": "Chuenisbärgli, Silleren, Hahnenmoos, Metsch",
       "country": "CH",
       "state": "Bern",
@@ -1297,6 +1399,7 @@
     {
       "id": "gstaad",
       "name": "Gstaad",
+      "shop": "https://www.gstaad.ch/en",
       "sub": "Gstaad Mountain Rides: Saanenmöser, Schönried, Zweisimmen, Rougemont, St. Stephan",
       "country": "CH",
       "state": "Bern",
@@ -1309,6 +1412,7 @@
     {
       "id": "engelberg",
       "name": "Engelberg-Titlis",
+      "shop": "https://shop.titlis.ch/en/products/skitickets",
       "country": "CH",
       "state": "Obwalden",
       "currency": "CHF",
@@ -1322,6 +1426,7 @@
     {
       "id": "cransmontana",
       "name": "Crans-Montana",
+      "shop": "https://www.mycma.ch",
       "country": "CH",
       "state": "Wallis",
       "currency": "CHF",
@@ -1336,6 +1441,7 @@
     {
       "id": "villars",
       "name": "Villars-Gryon-Les Diablerets",
+      "shop": "https://www.alpesvaudoises.ch",
       "country": "CH",
       "state": "Waadt",
       "currency": "CHF",
@@ -1348,6 +1454,7 @@
     {
       "id": "portesdusoleil",
       "name": "Les Portes du Soleil (CH)",
+      "shop": "https://www.portesdusoleil.com",
       "sub": "Champéry, Morgins, Champoussin, Les Crosets, Torgon",
       "country": "CH",
       "state": "Wallis",
@@ -1361,6 +1468,7 @@
     {
       "id": "aletsch",
       "name": "Aletsch Arena",
+      "shop": "https://www.aletscharena.ch",
       "sub": "Riederalp, Bettmeralp, Fiesch-Eggishorn",
       "country": "CH",
       "state": "Wallis",
@@ -1373,6 +1481,7 @@
     {
       "id": "belalp",
       "name": "Belalp",
+      "shop": "https://www.belalp.ch",
       "sub": "Belalp-Blatten",
       "country": "CH",
       "state": "Wallis",
@@ -1385,6 +1494,7 @@
     {
       "id": "loetschental",
       "name": "Lötschental",
+      "shop": "https://www.loetschental.ch",
       "sub": "Lauchernalp",
       "country": "CH",
       "state": "Wallis",
@@ -1397,6 +1507,7 @@
     {
       "id": "flumserberg",
       "name": "Flumserberg",
+      "shop": "https://www.flumserberg.ch",
       "country": "CH",
       "state": "St. Gallen",
       "currency": "CHF",
@@ -1409,6 +1520,7 @@
     {
       "id": "savognin",
       "name": "Savognin",
+      "shop": "https://www.valsurses.ch",
       "country": "CH",
       "state": "Graubünden",
       "currency": "CHF",
@@ -1420,6 +1532,7 @@
     {
       "id": "scuol",
       "name": "Scuol",
+      "shop": "https://www.bergbahnen-scuol.ch",
       "sub": "Motta Naluns",
       "country": "CH",
       "state": "Graubünden",
@@ -1432,6 +1545,7 @@
     {
       "id": "grimentzzinal",
       "name": "Grimentz-Zinal",
+      "shop": "https://www.valdanniviers.ch/fr/Z30511/domaine-rmgz",
       "sub": "Val d'Anniviers",
       "country": "CH",
       "state": "Wallis",
@@ -1444,6 +1558,7 @@
     {
       "id": "leukerbad",
       "name": "Leukerbad",
+      "shop": "https://www.leukerbad.ch",
       "sub": "Torrent",
       "country": "CH",
       "state": "Wallis",
@@ -1456,6 +1571,7 @@
     {
       "id": "pizol",
       "name": "Pizol",
+      "shop": "https://www.pizol.com",
       "sub": "Bad Ragaz / Wangs",
       "country": "CH",
       "state": "St. Gallen",
@@ -1469,6 +1585,7 @@
     {
       "id": "obersaxen",
       "name": "Obersaxen Mundaun",
+      "shop": "https://www.obersaxen-mundaun.ch",
       "sub": "Obersaxen, Mundaun, Val Lumnezia",
       "country": "CH",
       "state": "Graubünden",
@@ -1481,6 +1598,7 @@
     {
       "id": "3vallees",
       "name": "Les 3 Vallées",
+      "shop": "https://www.les3vallees.com",
       "sub": "Courchevel · Méribel · Val Thorens · Les Menuires",
       "country": "FR",
       "state": "Savoie",
@@ -1500,6 +1618,7 @@
     {
       "id": "courchevel",
       "name": "Courchevel",
+      "shop": "https://www.skipasscourchevel.com/forfaits-courchevel",
       "sub": "Vallée de Courchevel · La Tania",
       "country": "FR",
       "state": "Savoie",
@@ -1515,6 +1634,7 @@
     {
       "id": "valthorens",
       "name": "Val Thorens – Orelle",
+      "shop": "https://www.valthorens.com",
       "sub": "Val Thorens · Orelle",
       "country": "FR",
       "state": "Savoie",
@@ -1533,6 +1653,7 @@
     {
       "id": "menuires",
       "name": "Les Menuires – Saint-Martin",
+      "shop": "https://www.lesmenuires.com",
       "sub": "Vallée des Belleville",
       "country": "FR",
       "state": "Savoie",
@@ -1552,6 +1673,7 @@
     {
       "id": "tignesvaldisere",
       "name": "Tignes – Val d'Isère",
+      "shop": "https://www.valdisere.com/en/prepare-for-your-stay/buy-my-skipass/",
       "sub": "Tignes · Val d'Isère（原 Espace Killy）",
       "country": "FR",
       "state": "Savoie",
@@ -1571,6 +1693,7 @@
     {
       "id": "paradiski",
       "name": "Paradiski",
+      "shop": "https://www.paradiski.com",
       "sub": "Les Arcs · La Plagne · Peisey-Vallandry（Pass Essentiel）",
       "country": "FR",
       "state": "Savoie",
@@ -1584,6 +1707,7 @@
     {
       "id": "lesarcs",
       "name": "Les Arcs / Peisey-Vallandry",
+      "shop": "https://www.lesarcs.com",
       "sub": "Pass Classique",
       "country": "FR",
       "state": "Savoie",
@@ -1599,6 +1723,7 @@
     {
       "id": "chamonix",
       "name": "Chamonix Le Pass",
+      "shop": "https://www.montblancnaturalresort.com/fr/page/nos-forfaits",
       "sub": "Grands Montets · Brévent-Flégère · Balme",
       "country": "FR",
       "state": "Haute-Savoie",
@@ -1611,6 +1736,7 @@
     {
       "id": "mbunlimited",
       "name": "Mont-Blanc Unlimited",
+      "shop": "https://www.montblancnaturalresort.com",
       "sub": "Chamonix · Evasion Mont-Blanc · Courmayeur",
       "country": "FR",
       "state": "Haute-Savoie",
@@ -1629,6 +1755,7 @@
     {
       "id": "evasion",
       "name": "Evasion Mont-Blanc",
+      "shop": "https://forfait.megeve.com",
       "sub": "Megève · Saint-Gervais · Combloux · Les Contamines",
       "country": "FR",
       "state": "Haute-Savoie",
@@ -1648,6 +1775,7 @@
     {
       "id": "portesdusoleil-fr",
       "name": "Les Portes du Soleil",
+      "shop": "https://www.portesdusoleil.com",
       "sub": "Avoriaz · Morzine · Les Gets · Châtel · Champéry",
       "country": "FR",
       "state": "Haute-Savoie",
@@ -1666,6 +1794,7 @@
     {
       "id": "lesgets",
       "name": "Morzine – Les Gets",
+      "shop": "https://www.lesgets.com",
       "country": "FR",
       "state": "Haute-Savoie",
       "currency": "EUR",
@@ -1678,6 +1807,7 @@
     {
       "id": "chatel",
       "name": "Châtel",
+      "shop": "https://www.chatel.com",
       "country": "FR",
       "state": "Haute-Savoie",
       "currency": "EUR",
@@ -1690,6 +1820,7 @@
     {
       "id": "grandmassif",
       "name": "Le Grand Massif",
+      "shop": "https://www.grand-massif.com",
       "sub": "Flaine · Samoëns · Les Carroz · Morillon · Sixt",
       "country": "FR",
       "state": "Haute-Savoie",
@@ -1705,6 +1836,7 @@
     {
       "id": "laclusaz",
       "name": "La Clusaz – Manigod",
+      "shop": "https://forfait.laclusaz.com/fr/tarifs-forfait-la-clusaz",
       "country": "FR",
       "state": "Haute-Savoie",
       "currency": "EUR",
@@ -1717,6 +1849,7 @@
     {
       "id": "grandbornand",
       "name": "Le Grand-Bornand",
+      "shop": "https://www.legrandbornand.com",
       "country": "FR",
       "state": "Haute-Savoie",
       "currency": "EUR",
@@ -1731,6 +1864,7 @@
     {
       "id": "alpedhuez",
       "name": "Alpe d'Huez",
+      "shop": "https://skipass.alpedhuez.com/hiver/forfait/forfait-ski/",
       "sub": "Espace Alpe d'Huez · Grand Domaine",
       "country": "FR",
       "state": "Isère",
@@ -1750,6 +1884,7 @@
     {
       "id": "les2alpes",
       "name": "Les 2 Alpes",
+      "shop": "https://www.les2alpes.com",
       "country": "FR",
       "state": "Isère",
       "currency": "EUR",
@@ -1762,6 +1897,7 @@
     {
       "id": "serrechevalier",
       "name": "Serre Chevalier",
+      "shop": "https://www.serre-chevalier.com",
       "sub": "Briançon · Chantemerle · Villeneuve · Monêtier",
       "country": "FR",
       "state": "Hautes-Alpes",
@@ -1777,6 +1913,7 @@
     {
       "id": "montgenevre",
       "name": "Montgenèvre",
+      "shop": "https://skipass.montgenevre.com/en/tarifs-guichet",
       "sub": "Montgenèvre + Monts de la Lune（Voie Lactée）",
       "country": "FR",
       "state": "Hautes-Alpes",
@@ -1796,6 +1933,7 @@
     {
       "id": "foretblanche",
       "name": "La Forêt Blanche",
+      "shop": "https://www.vars.com/fr/preparer-mon-sejour/nos-forfaits/forfaits-de-ski-et-activites/",
       "sub": "Vars · Risoul",
       "country": "FR",
       "state": "Hautes-Alpes",
@@ -1811,6 +1949,7 @@
     {
       "id": "larosiere",
       "name": "La Rosière – Espace San Bernardo",
+      "shop": "https://www.larosiere.net",
       "sub": "La Rosière · La Thuile (IT)",
       "country": "FR",
       "state": "Savoie",
@@ -1826,6 +1965,7 @@
     {
       "id": "saintefoy",
       "name": "Sainte-Foy Tarentaise",
+      "shop": "https://www.saintefoy-ski.com/tarifs",
       "country": "FR",
       "state": "Savoie",
       "currency": "EUR",
@@ -1838,6 +1978,7 @@
     {
       "id": "valmorel",
       "name": "Valmorel – Le Grand Domaine",
+      "shop": "https://skipass.valmorel.com/fr/tarifs-forfaits-valmorel",
       "sub": "Valmorel · Saint-François-Longchamp",
       "country": "FR",
       "state": "Savoie",
@@ -1851,6 +1992,7 @@
     {
       "id": "galibierthabor",
       "name": "Galibier-Thabor",
+      "shop": "https://www.valloire.net",
       "sub": "Valloire · Valmeinier",
       "country": "FR",
       "state": "Savoie",
@@ -1864,6 +2006,7 @@
     {
       "id": "sybelles",
       "name": "Les Sybelles",
+      "shop": "https://www.sybelles.ski",
       "sub": "Le Corbier · La Toussuire · Saint-Sorlin-d'Arves · Saint-Jean-d'Arves",
       "country": "FR",
       "state": "Savoie",
@@ -1879,6 +2022,7 @@
     {
       "id": "espacediamant",
       "name": "Espace Diamant",
+      "shop": "https://www.lessaisies.com/une-fois-sur-place/les-saisies-sous-la-neige/ski-et-activites/acheter-mon-forfait-de-ski/",
       "sub": "Les Saisies · Crest-Voland · Praz-sur-Arly · Notre-Dame-de-Bellecombe",
       "country": "FR",
       "state": "Savoie",
@@ -1892,6 +2036,7 @@
     {
       "id": "saintlary",
       "name": "Saint-Lary",
+      "shop": "https://www.saintlary.com/hiver/",
       "country": "FR",
       "state": "Hautes-Pyrénées",
       "currency": "EUR",
@@ -1904,6 +2049,7 @@
     {
       "id": "grandtourmalet",
       "name": "Grand Tourmalet",
+      "shop": "https://www.n-py.com/fr/grand-tourmalet/forfaits-ski",
       "sub": "La Mongie · Barèges",
       "country": "FR",
       "state": "Hautes-Pyrénées",
