@@ -15,7 +15,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 DATE = re.compile(r'^\d{4}-\d{2}-\d{2}$')
 ID = re.compile(r'^[a-z0-9][a-z0-9-]*$')
-TOP_KEYS = {'season', 'updated', 'currency', 'range', 'tiers', 'notice', 'sources', 'resorts', 'countries', 'fx'}
+TOP_KEYS = {'season', 'updated', 'currency', 'range', 'tiers', 'notice', 'sources', 'resorts', 'countries', 'fx', 'passes'}
+PASS_KEYS = {'id', 'name', 'country', 'currency', 'price', 'earlyPrice', 'earlyUntil', 'season', 'covers', 'resorts', 'url',
+             'source', 'note'}
+PASS_COUNTRIES = {'AT', 'CH', 'FR', 'DE', 'INT'}
+PASS_MIN, PASS_MAX = 150, 4000          # plausible adult season-pass price
 RESORT_KEYS = {'id', 'name', 'sub', 'country', 'state', 'currency', 'price', 'multi', 'open', 'close', 'periods',
                'dynamic', 'fromPrice', 'estimated', 'aliases', 'note', 'source', 'shop'}
 PERIOD_KEYS = {'from', 'to', 'price', 'label', 'multi'}
@@ -169,7 +173,48 @@ def validate(doc):
             rep.warn(where, '没有 shop（官网购票链接）')
         elif not str(r['shop']).startswith('https://'):
             rep.err(where, 'shop 必须是 https:// 开头的官网网址')
+    check_passes(rep, doc.get('passes', []), seen, currencies)
     return rep
+
+
+def check_passes(rep, passes, resort_ids, currencies):
+    if not isinstance(passes, list):
+        rep.err('passes', '必须是列表')
+        return
+    seen = set()
+    for idx, p in enumerate(passes):
+        pid = p.get('id') if isinstance(p, dict) else None
+        where = f'passes[{idx}] {pid or "?"}'
+        if not isinstance(p, dict):
+            rep.err(where, '必须是对象')
+            continue
+        for k in p:
+            if k not in PASS_KEYS:
+                rep.warn(where, f'未知字段 "{k}"')
+        if not isinstance(pid, str) or not ID.match(pid):
+            rep.err(where, 'id 必须是小写字母、数字或连字符')
+        elif pid in seen:
+            rep.err(where, 'id 重复')
+        seen.add(pid)
+        if not isinstance(p.get('name'), str) or not p['name'].strip():
+            rep.err(where, '缺少 name')
+        if p.get('country') not in PASS_COUNTRIES:
+            rep.err(where, f'country 必须是 {sorted(PASS_COUNTRIES)} 之一')
+        cur = p.get('currency', 'EUR')
+        if cur not in currencies:
+            rep.err(where, f'currency "{cur}" 没有对应的 fx 汇率')
+        if not (is_num(p.get('price')) and PASS_MIN <= p['price'] <= PASS_MAX):
+            rep.err(where, f'price {p.get("price")} 不在 {PASS_MIN}–{PASS_MAX} 之间')
+        if p.get('earlyPrice') is not None:
+            if not (is_num(p['earlyPrice']) and 0 < p['earlyPrice'] <= p.get('price', 0)):
+                rep.err(where, 'earlyPrice 必须是正数，且不高于 price')
+            if 'earlyUntil' in p and p['earlyUntil'] is not None and not is_date(p['earlyUntil']):
+                rep.err(where, 'earlyUntil 必须是 YYYY-MM-DD')
+        unknown = [r for r in p.get('resorts', []) if r not in resort_ids]
+        if unknown:
+            rep.err(where, f'resorts 里有不存在的雪场 id：{", ".join(unknown)}')
+        if not str(p.get('url', 'https://')).startswith('https://'):
+            rep.err(where, 'url 必须是 https:// 开头')
 
 
 def diff(old, new):
@@ -177,6 +222,14 @@ def diff(old, new):
     o = {r['id']: r for r in old.get('resorts', []) if isinstance(r, dict) and 'id' in r}
     n = {r['id']: r for r in new.get('resorts', []) if isinstance(r, dict) and 'id' in r}
     lines, warn = [], []
+    op = {p['id']: p for p in old.get('passes', []) if isinstance(p, dict) and 'id' in p}
+    for p in new.get('passes', []):
+        if isinstance(p, dict) and p.get('id') in op:
+            for k in ('price', 'earlyPrice', 'season', 'resorts'):
+                if op[p['id']].get(k) != p.get(k):
+                    lines.append(f'通票 {p["id"]}: {k} {json.dumps(op[p["id"]].get(k), ensure_ascii=False)} → {json.dumps(p.get(k), ensure_ascii=False)}')
+        elif isinstance(p, dict):
+            lines.append(f'新增通票 {p.get("id")}（{p.get("name")}）')
     for rid in sorted(o.keys() - n.keys()):
         warn.append(f'删除了雪场 {rid}（{o[rid].get("name")}）—— 已有的滑雪记录仍保留名字，但不再自动填价')
     for rid in sorted(n.keys() - o.keys()):

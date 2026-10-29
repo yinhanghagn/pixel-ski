@@ -21,6 +21,8 @@ const ticketName = n => (n === 1 ? '一日票' : `${n} 天票`);
 const LS_DATA = 'pixel-ski.data.v1';
 const LS_PRICES = 'pixel-ski.prices.v1';
 const LS_NOINSTALL = 'pixel-ski.hide-install';
+const LS_ONBOARDED = 'pixel-ski.onboarded';
+const LS_MINE = 'pixel-ski.only-my-pass';
 function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
 function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
 
@@ -33,6 +35,7 @@ const COUNTRY_DEFAULT = { AT: '奥地利', CH: '瑞士', FR: '法国' };
 const PX = {
   loaded: false, season: '', updated: '', range: { from: '2026-09-01', to: '2027-06-30' }, tiers: { cheap: 65, pricey: 79 },
   notice: '', sources: [], skipped: 0, offline: false, countries: { ...COUNTRY_DEFAULT }, fx: { EUR: 1 }, fxNote: '', durations: [1],
+  passes: [],
 };
 let R = [], RBY = {};
 
@@ -116,6 +119,20 @@ function applyPrices(j) {
   const ds = new Set([1]);
   R.forEach(r => { Object.keys(r.multi).forEach(n => ds.add(+n)); r.per.forEach(p => Object.keys(p.multi).forEach(n => ds.add(+n))); });
   PX.durations = [...ds].sort((a, b) => a - b);
+  PX.passes = Array.isArray(j.passes) ? j.passes.map(normPass).filter(Boolean) : [];
+}
+
+// One season pass from prices.json; resorts are ids from the resort list.
+function normPass(e) {
+  if (!e || typeof e.id !== 'string' || typeof e.name !== 'string' || !(isFinite(e.price) && e.price > 0)) return null;
+  const okDate = s => typeof s === 'string' && DATE_RE.test(s);
+  return {
+    id: e.id, name: e.name, c: typeof e.country === 'string' ? e.country : 'INT', cur: typeof e.currency === 'string' ? e.currency : 'EUR',
+    price: +e.price, early: isFinite(e.earlyPrice) && e.earlyPrice > 0 ? +e.earlyPrice : null, earlyUntil: okDate(e.earlyUntil) ? e.earlyUntil : null,
+    season: String(e.season || ''), covers: String(e.covers || ''), note: String(e.note || ''),
+    resorts: Array.isArray(e.resorts) ? e.resorts.filter(id => RBY[id]) : [],
+    url: /^https:\/\//.test(e.url || '') ? e.url : '',
+  };
 }
 
 async function loadPrices() {
@@ -132,7 +149,9 @@ async function loadPrices() {
   }
   UI.date = clampDate(UI.date);
   if (!PX.durations.includes(UI.n)) UI.n = 1;
+  UI.mine = lsGet(LS_MINE) !== false && !!(myPass() && myPass().resorts.length);
   renderFilters(); renderPrices(); renderFooter(); renderMe();
+  if (!D.settings && !lsGet(LS_ONBOARDED) && PX.passes.length) openPassPicker();
 }
 
 const clampDate = s => s < PX.range.from ? PX.range.from : s > PX.range.to ? PX.range.to : s;
@@ -320,7 +339,7 @@ function sprite(map, x, y, sub = {}) {
 const icon = (map, w) => `<svg class="px" viewBox="0 0 ${map[0].length} ${map.length}" width="${w}" aria-hidden="true">${sprite(map, 0, 0)}</svg>`;
 
 /* ---------- UI state ---------- */
-const UI = { view: 'prices', date: localToday(), n: 1, country: 'all', st: '全部', q: '', sort: 'asc', open: null, editSettings: false, pickMode: null, confirmDel: null };
+const UI = { view: 'prices', date: localToday(), n: 1, country: 'all', st: '全部', q: '', sort: 'asc', open: null, mine: false, confirmDel: null };
 
 /* ---------- prices view ---------- */
 function stateRank(s) { const i = STATE_ORDER.indexOf(s); return i < 0 ? 99 : i; }
@@ -328,6 +347,8 @@ function renderFilters() {
   const countries = [...new Set(R.map(r => r.c))];
   if (UI.country !== 'all' && !countries.includes(UI.country)) UI.country = 'all';
   const cc = [['all', '全部国家'], ...countries.map(c => [c, PX.countries[c] || c])];
+  const mp = myPass();
+  if (!mp || !mp.resorts.length) UI.mine = false;
   let html = `<div class="chips">${cc.map(([k, l]) => `<button class="chip" data-country="${esc(k)}" aria-pressed="${k === UI.country}">${esc(l)}</button>`).join('')}</div>`;
   if (UI.country !== 'all') {
     const sts = [...new Set(R.filter(r => r.c === UI.country).map(r => r.st))].sort((a, b) => stateRank(a) - stateRank(b) || a.localeCompare(b));
@@ -393,6 +414,7 @@ function detail(r) {
   const op = i.s === 'pre' ? openingPrice(r, n) : null;
   if (op) head += ` · 开季当天 ${money(op.p, r.cur)}`;
   bits.push(`<p>${head}</p>`);
+  if (inMyPass(r)) bits.push(`<p class="note">🎫 你的 ${esc(myPass().name)} 能滑这里，不用另买票。</p>`);
   bits.push(`<p class="note">开季：${r.open ? fmtDate(r.open) : '未公布'} · 闭季：${r.close ? fmtDate(r.close) : '未公布'}</p>`);
   bits.push(ticketTable(r));
   // price periods for the selected ticket length only
@@ -410,6 +432,20 @@ function detail(r) {
   if (r.shop) bits.push(`<p class="note">“官网购票”会打开 ${esc(r.n)} 的官方网站，很多雪场在官网提前买比售票处便宜。</p>`);
   return `<div class="detail">${bits.filter(Boolean).join('')}</div>`;
 }
+// "only resorts my season pass covers" — the default view for pass holders, remembered per device
+function setMine(on) {
+  UI.mine = on;
+  lsSet(LS_MINE, on);
+  renderFilters(); renderPrices();
+}
+function mineBar(count) {
+  const mp = myPass();
+  if (!mp || !mp.resorts.length) return '';
+  return UI.mine
+    ? `<div class="minebar"><span>🎫 正在看 <b>${esc(mp.name)}</b> 能滑的 <b>${count}</b> 个雪场${count < mp.resorts.length ? `（共 ${mp.resorts.length} 个，其余被上面的国家 / 地区筛掉了）` : ''}。</span><button class="btn sm ghost" data-mine>看全部雪场</button></div>`
+    : `<div class="minebar off"><span>你的通票是 <b>${esc(mp.name)}</b>。</span><button class="btn sm gold" data-mine>只看它能滑的 ${mp.resorts.length} 个雪场</button></div>`;
+}
+
 function renderPrices() {
   $('#date').value = UI.date;
   if (!PX.loaded) {
@@ -418,7 +454,7 @@ function renderPrices() {
     return;
   }
   const d = UI.date, n = UI.n;
-  const pool = R.filter(r => (UI.country === 'all' || r.c === UI.country) && (UI.st === '全部' || r.st === UI.st));
+  const pool = R.filter(r => (UI.country === 'all' || r.c === UI.country) && (UI.st === '全部' || r.st === UI.st) && (!UI.mine || inMyPass(r)));
   const matches = UI.q ? searchResorts(UI.q, pool) : pool.map(r => ({ r, m: null }));
   const rows = matches.map(({ r, m }) => {
     const i = priceOn(r, d, n);
@@ -437,12 +473,12 @@ function renderPrices() {
   const pick = cmp => open.length ? open.reduce((a, b) => (cmp(perDayEUR(a.r, a.i, n), perDayEUR(b.r, b.i, n)) ? a : b)) : null;
   const lo = pick((a, b) => a <= b), hi = pick((a, b) => a >= b);
   const tile = (label, x) => `<div class="sumtile"><small>${label}${n > 1 ? `（${n} 天票）` : ''}</small><b class="num">${x ? money(x.i.p, x.r.cur) : '–'}</b><small>${x ? esc(x.r.n) + (n > 1 ? ` · 每天 ${money(x.i.p / n, x.r.cur)}` : '') : '这天没有可查的价格'}</small></div>`;
-  $('#summary').innerHTML = `
+  $('#summary').innerHTML = mineBar(rows.length) + `
     <div class="sumtile"><small>${fmtDate(d)}${n > 1 ? ' 出发' : ''}</small><b class="num">${open.length}<span style="font-size:14px"> 家有价</span></b><small>共 ${rows.length} 家${UI.q ? '匹配' : ''}</small></div>
     ${tile('最便宜', lo)}${tile('最贵', hi)}${preseasonHint(rows)}`;
   $('#list').innerHTML = rows.length ? rows.map(({ r, m, i, op }) => {
     const ex = UI.open === r.id;
-    const sub = [UI.country === 'all' ? PX.countries[r.c] || r.c : '', r.st, r.x, m && m.via,
+    const sub = [!UI.mine && inMyPass(r) ? '🎫 通票能滑' : '', UI.country === 'all' ? PX.countries[r.c] || r.c : '', r.st, r.x, m && m.via,
       i.s === 'open' && n > 1 ? `每天 ${money(i.p / n, r.cur)}` : '', i.s === 'open' && i.l ? i.l : '',
       op ? `开季后 ${money(op.p, r.cur)}` : '',
       i.s === 'dyn' && r.from != null ? `约 ${money(r.from, r.cur)} 起` : '', !r.open && i.s === 'open' ? '开季日未公布' : ''].filter(Boolean).map(esc).join(' · ');
@@ -553,33 +589,148 @@ function hintText() {
   const what = n > 1 ? `${n} 天票` : '一日票';
   if (!FORM.resort && !FORM.rname.trim()) return `输入雪场名（中文、别名、拼错几个字母都行），会按当天的${what}门市价自动填金额。`;
   if (!r) return `“${FORM.rname.trim()}”不在列表里，会按你写的名字记录，金额请手填。`;
+  const mp = myPass();
+  const outside = mp && mp.resorts.length && !inMyPass(r) ? `⚠ ${r.n} 不在 ${mp.name} 里，这天一般要另外买票。` : '';
   const i = priceOn(r, FORM.date, n);
-  if (i.s !== 'open') return `${r.n} 这天${i.txt}，请手动填金额。`;
+  if (i.s !== 'open') return `${outside}${r.n} 这天${i.txt}，请手动填金额。`;
   const conv = r.cur !== 'EUR' ? `（${money(i.p, r.cur)}，按 1 ${r.cur} ≈ ${num2(PX.fx[r.cur], 'de-AT')} € 换算）` : '';
   const tail = isPass() ? '' : '网上买得更便宜的话改成实际价格。';
-  return `按 ${r.n} ${fmtMD(FORM.date)} 起的${what} ${eur(toEUR(i.p, r.cur))}${conv} 自动填好了，可以改。${tail}`;
+  return `${outside}按 ${r.n} ${fmtMD(FORM.date)} 起的${what} ${eur(toEUR(i.p, r.cur))}${conv} 自动填好了，可以改。${tail}`;
 }
 
-function settingsView() {
+// Shown in 我的雪季 until a recording mode is chosen.
+function welcomeView() {
+  return `<div><h2>你这个雪季怎么滑？</h2><p class="sub">告诉雪票本你买了哪张通票（或者没买），它就能帮你算回本进度、记滑雪日记。</p></div>
+    <div class="choices">
+      <button class="choice" data-open-picker>${icon(FLAG, 30)}<span><b>选择我的通票</b><small>奥地利、瑞士、法国、德国的常见通票，每滑一天按当天票价抵扣，看小企鹅爬到山顶回本。</small></span></button>
+      <button class="choice" data-open-picker="none">${icon(BOOK, 32)}<span><b>没买通票，只想记录</b><small>记下每次去哪滑、花了多少（单日票或多天通票），集满滑雪章。</small></span></button>
+    </div>`;
+}
+
+/* ---------- season-pass picker (first open, and 我的雪季 → 设置) ---------- */
+const PASS_REGION = { AT: '奥地利', CH: '瑞士', FR: '法国', DE: '德国', INT: '多国通票' };
+const PK = { step: 'list', region: 'all', q: '', id: null };
+const passBy = id => PX.passes.find(p => p.id === id) || null;
+const myPass = () => (isPass() && D.settings.passId ? passBy(D.settings.passId) : null);
+const inMyPass = r => { const p = myPass(); return !!(p && p.resorts.includes(r.id)); };
+
+function openPassPicker(step = 'list') {
+  Object.assign(PK, { step, region: 'all', q: '', id: null });
+  drawPicker();
+  const d = $('#onboard');
+  if (!d.open) { if (d.showModal) d.showModal(); else d.setAttribute('open', ''); }
+}
+function closePicker() { const d = $('#onboard'); if (d.close) d.close(); else { d.removeAttribute('open'); lsSet(LS_ONBOARDED, true); } }
+
+function passPriceTxt(p) {
+  const conv = p.cur !== 'EUR' && toEUR(p.price, p.cur) != null ? ` ≈ ${eur(toEUR(p.price, p.cur))}` : '';
+  return money(p.price, p.cur) + conv;
+}
+function passListHTML() {
+  const qf = fold(PK.q);
+  const list = PX.passes.filter(p => (PK.region === 'all' || p.c === PK.region)
+    && (!qf || fold([p.name, p.covers, ...p.resorts.map(id => RBY[id].n), ...p.resorts.flatMap(id => RBY[id].aliases)].join(' ')).includes(qf)));
+  const cur = D.settings && D.settings.passId;
+  return list.length ? list.map(p => `<button class="pass${p.id === cur ? ' cur' : ''}" data-pass="${esc(p.id)}">
+      <span class="pn"><b>${esc(p.name)}</b><small>${esc(PASS_REGION[p.c] || p.c)} · ${esc(p.covers)}</small></span>
+      <span class="pp num">${money(p.price, p.cur)}<small>${p.early ? `早鸟 ${money(p.early, p.cur)}` : p.season && p.season !== PX.season ? `${esc(p.season)} 价格` : '成人价'}</small></span></button>`).join('')
+    : `<p class="empty">没有找到。可以换个关键词，或者点下面「自己填」。</p>`;
+}
+function pickerList() {
+  const regions = ['all', ...Object.keys(PASS_REGION).filter(k => PX.passes.some(p => p.c === k))];
+  return `<div><h2>你这个雪季买了哪张通票？</h2><p class="sub">选好后，每滑一天就按当天的票价帮你算回本进度。之后在「我的雪季 → 设置」随时可以改。</p></div>
+    <button class="btn mint nopass" data-pk="none">❄ 我没有买通票，只想记录滑雪日记</button>
+    <div class="chips">${regions.map(k => `<button class="chip" data-pk-region="${k}" aria-pressed="${k === PK.region}">${k === 'all' ? '全部' : PASS_REGION[k]}</button>`).join('')}</div>
+    <input type="search" id="pk-q" placeholder="搜通票或雪场：SuperSkiCard、Magic、采尔马特…" value="${esc(PK.q)}" aria-label="搜索通票">
+    <div class="passlist" id="pk-list">${passListHTML()}</div>
+    <div class="bar"><button class="btn ghost sm" data-pk="custom">我的通票不在列表里 → 自己填</button><button class="btn ghost sm" data-pk="later">以后再说</button></div>`;
+}
+function pickerConfirm(p) {
+  // most season passes are bought at the early-bird price, so start from that one
+  const v = toEUR(p.early || p.price, p.cur);
+  const names = p.resorts.map(id => RBY[id].n);
+  const ended = p.earlyUntil && p.earlyUntil < localToday();
+  const early = p.early ? `早鸟价 ${money(p.early, p.cur)}${p.earlyUntil ? `（${ended ? '已于' : ''}${fmtMD(p.earlyUntil)}${ended ? '截止' : '前'}）` : ''}。` : '';
+  return `<div><h2>${esc(p.name)}</h2><p class="sub">${esc(PASS_REGION[p.c] || p.c)} · ${esc(p.covers)}</p></div>
+    ${names.length ? `<p class="note">雪票本里能用这张通票滑的雪场（${names.length} 个）：${names.map(esc).join('、')}</p>` : '<p class="note">雪票本的价格表里暂时没有这张通票覆盖的雪场，记账时金额需要手填。</p>'}
+    ${p.note ? `<p class="note">${esc(p.note)}</p>` : ''}
+    <form class="form" id="pk-form">
+      <label class="f wide"><span>你实际付了多少 (€)</span><input id="pk-price" type="number" required min="1" step="0.01" inputmode="decimal" value="${v == null ? '' : round2(v)}"></label>
+      <p class="hint wide">${p.early ? `先按早鸟价${p.cur !== 'EUR' ? '折成欧元' : ''}填好了。` : ''}成人正价 ${passPriceTxt(p)}${p.season && p.season !== PX.season ? `（${esc(p.season)} 雪季的价格，新价格还没公布）` : ''}。${early}学生、青少年或长者价不一样的话，改成你实际付的。</p>
+      <div class="bar wide"><button class="btn ghost" type="button" data-pk="back">← 换一张</button><button class="btn gold" type="submit">就是这张，开始记录</button>${p.url ? `<a class="btn ghost sm" href="${esc(p.url)}" target="_blank" rel="noopener">官网 ↗</a>` : ''}</div>
+    </form>`;
+}
+function pickerCustom() {
   const s = D.settings || {};
-  const mode = UI.pickMode || s.mode || '';
-  const parts = [];
-  parts.push(`<div><h2>${D.settings ? '设置' : '你这个雪季怎么滑？'}</h2><p class="sub">选一种记录方式，之后随时可以在设置里换。已经记下的滑雪日不会丢。</p></div>`);
-  parts.push(`<div class="choices">
-    <button class="choice" data-mode="pass" aria-pressed="${mode === 'pass'}">${icon(FLAG, 30)}<span><b>我买了季票</b><small>每滑一天按当天票价抵扣，看小企鹅爬到山顶回本。</small></span></button>
-    <button class="choice" data-mode="diary" aria-pressed="${mode === 'diary'}">${icon(BOOK, 32)}<span><b>没季票，只想记录</b><small>记下每次去哪滑、花了多少（单日票或多天通票），集满滑雪章。</small></span></button>
-  </div>`);
-  if (mode) {
-    parts.push(`<form class="form" id="setForm">
-      ${mode === 'pass' ? `
-        <label class="f"><span>季票名称</span><input id="sf-name" required maxlength="60" placeholder="如：SuperSkiCard" value="${esc(s.passName || '')}"></label>
-        <label class="f"><span>季票价格 (€)</span><input id="sf-price" type="number" required min="1" step="0.01" inputmode="decimal" placeholder="如：1010" value="${s.passPrice ?? ''}"></label>`
-      : `
-        <label class="f wide"><span>想看看买季票值不值？填一个季票价格做对比（可不填）</span><input id="sf-compare" type="number" min="1" step="0.01" inputmode="decimal" placeholder="如：1010" value="${s.compare ?? ''}"></label>`}
-      <div class="bar wide"><button class="btn gold" type="submit">${D.settings ? '保存设置' : '开始记录'}</button>${D.settings ? '<button class="btn ghost" type="button" id="sf-cancel">取消</button>' : ''}</div>
-    </form>`);
+  const own = s.mode === 'pass' && !s.passId;
+  return `<div><h2>自己填通票</h2><p class="sub">列表里没有的通票也能记，只是不会标出它覆盖哪些雪场。</p></div>
+    <form class="form" id="pk-form">
+      <label class="f"><span>通票名称</span><input id="pk-name" required maxlength="60" placeholder="如：Skipass Saison XY" value="${own ? esc(s.passName || '') : ''}"></label>
+      <label class="f"><span>价格 (€)</span><input id="pk-price" type="number" required min="1" step="0.01" inputmode="decimal" placeholder="如：990" value="${own ? s.passPrice ?? '' : ''}"></label>
+      <div class="bar wide"><button class="btn ghost" type="button" data-pk="back">← 返回</button><button class="btn gold" type="submit">开始记录</button></div>
+    </form>`;
+}
+function pickerNone() {
+  const s = D.settings || {};
+  return `<div><h2>没买通票，只想记录</h2><p class="sub">每滑一天盖一个雪花章，集满解锁徽章，还能看到一共花了多少钱。</p></div>
+    <form class="form" id="pk-form">
+      <label class="f wide"><span>想看看买通票值不值？填一个通票价格做对比（可不填）</span><input id="pk-compare" type="number" min="1" step="0.01" inputmode="decimal" placeholder="如：1010" value="${s.compare ?? ''}"></label>
+      <div class="bar wide"><button class="btn ghost" type="button" data-pk="back">← 返回</button><button class="btn gold" type="submit">开始记录</button></div>
+    </form>`;
+}
+function drawPicker() {
+  const d = $('#onboard');
+  const p = PK.step === 'confirm' ? passBy(PK.id) : null;
+  const body = p ? pickerConfirm(p) : PK.step === 'custom' ? pickerCustom() : PK.step === 'none' ? pickerNone() : pickerList();
+  d.innerHTML = `<div class="in">${body}</div><button class="x" data-pk="later" aria-label="关闭">✕</button>`;
+  const q = $('#pk-q');
+  if (q) q.oninput = () => { PK.q = q.value; $('#pk-list').innerHTML = passListHTML(); };
+  const f = $('#pk-form');
+  if (f) f.onsubmit = e => { e.preventDefault(); savePicker(p); };
+  d.scrollTop = 0;
+}
+function savePicker(p) {
+  const prev = D.settings || {};
+  let next;
+  if (PK.step === 'none') {
+    const c = +$('#pk-compare').value;
+    next = { ...prev, mode: 'diary', compare: c > 0 ? c : null };
+  } else {
+    const price = +$('#pk-price').value;
+    const name = p ? p.name : $('#pk-name').value.trim();
+    if (!name || !(price > 0)) { toast('通票名称和价格都要填'); return; }
+    next = { ...prev, mode: 'pass', passId: p ? p.id : '', passName: name, passPrice: price };
   }
-  return parts.join('');
+  D.settings = next;
+  if (!saveData()) return;
+  closePicker();
+  const mp = myPass();
+  if (mp && mp.resorts.length) {
+    UI.country = 'all'; UI.st = '全部'; UI.q = ''; $('#q').value = '';
+    setMine(true);
+    location.hash = 'prices'; show('prices');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    toast(`已选择 ${mp.name}，下面是它能滑的 ${mp.resorts.length} 个雪场`);
+  } else {
+    UI.mine = false; renderFilters(); renderPrices();
+    toast(next.mode === 'pass' ? `已选择 ${next.passName}，滑完一天去「我的雪季」记一笔` : '好的，去「我的雪季」记录每一次滑雪');
+  }
+  renderMe();
+}
+function bindPicker() {
+  const d = $('#onboard');
+  d.addEventListener('click', e => {
+    if (e.target === d) { closePicker(); return; }   // tap on the dimmed backdrop
+    const b = e.target.closest('[data-pk],[data-pk-region],[data-pass]');
+    if (!b) return;
+    if (b.dataset.pass) { PK.step = 'confirm'; PK.id = b.dataset.pass; drawPicker(); return; }
+    if (b.dataset.pkRegion) { PK.region = b.dataset.pkRegion; drawPicker(); return; }
+    const a = b.dataset.pk;
+    if (a === 'later') closePicker();
+    else if (a === 'back') { PK.step = 'list'; drawPicker(); }
+    else { PK.step = a; drawPicker(); }
+  });
+  d.addEventListener('close', () => lsSet(LS_ONBOARDED, true));
 }
 
 function logFormView() {
@@ -634,12 +785,14 @@ function backupView() {
 /* ---------- my season: render ---------- */
 function renderMe() {
   const el = $('#me');
-  if (!D.settings || UI.editSettings) { el.innerHTML = settingsView(); bindMe(); return; }
+  if (!D.settings) { el.innerHTML = welcomeView(); bindMe(); return; }
   const st = stats();
   const parts = [];
   const s = D.settings;
   if (isPass()) {
     parts.push(`<div class="passhead"><div class="passcard"><span class="modechip">季票回本</span><span class="ticket num">${esc(s.passName)}</span><span class="num">${eur(+s.passPrice)}</span></div><button class="btn sm ghost" id="openSettings">设置</button></div>`);
+    const mp = myPass();
+    if (mp && mp.resorts.length) parts.push(`<div class="minebar off"><span>🎫 ${esc(mp.covers)}</span><button class="btn sm gold" data-goto-mine>看我的通票能滑的 ${mp.resorts.length} 个雪场 →</button></div>`);
     const pct = st.pct;
     const bubble = pct >= 1 ? `回本啦！${st.breakDate ? fmtDate(st.breakDate) : ''}` : st.dayCount ? `还差 ${eur(st.left)}` : '第一天在哪里滑？';
     parts.push(`<div class="scene">${scene(pct)}<span class="bubble">${bubble}</span></div>`);
@@ -677,30 +830,11 @@ function renderMe() {
 }
 
 function bindMe() {
-  document.querySelectorAll('[data-mode]').forEach(b => (b.onclick = () => { UI.pickMode = b.dataset.mode; renderMe(); }));
-  const sf = $('#setForm');
-  if (sf) {
-    sf.onsubmit = e => {
-      e.preventDefault();
-      const mode = UI.pickMode || (D.settings && D.settings.mode);
-      const next = { ...(D.settings || {}), mode };
-      if (mode === 'pass') {
-        const name = $('#sf-name').value.trim(), price = +$('#sf-price').value;
-        if (!name || !(price > 0)) { toast('季票名称和价格都要填'); return; }
-        Object.assign(next, { passName: name, passPrice: price });
-      } else {
-        const c = +$('#sf-compare').value;
-        next.compare = c > 0 ? c : null;
-      }
-      D.settings = next;
-      if (saveData()) toast('设置已保存');
-      UI.editSettings = false; UI.pickMode = null; renderMe();
-    };
-    const c = $('#sf-cancel');
-    if (c) c.onclick = () => { UI.editSettings = false; UI.pickMode = null; renderMe(); };
-  }
+  document.querySelectorAll('[data-open-picker]').forEach(b => (b.onclick = () => openPassPicker(b.dataset.openPicker || 'list')));
   const os = $('#openSettings');
-  if (os) os.onclick = () => { UI.editSettings = true; UI.pickMode = D.settings.mode; renderMe(); };
+  if (os) os.onclick = () => openPassPicker();
+  const gm = $('[data-goto-mine]');
+  if (gm) gm.onclick = () => { location.hash = 'prices'; show('prices'); setMine(true); window.scrollTo({ top: 0, behavior: 'smooth' }); };
 
   document.querySelectorAll('[data-kind]').forEach(b => (b.onclick = () => { FORM.kind = b.dataset.kind; FORM.value = ''; renderMe(); }));
   const lf = $('#logForm');
@@ -829,7 +963,7 @@ function prefillLog(id, date) {
   location.hash = 'me'; show('me'); renderMe();
   const f = $('#logForm') || $('#me');
   f.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  if (!D.settings) toast('先选一种记录方式，再记这一笔');
+  if (!D.settings) openPassPicker();
 }
 
 /* ---------- boot ---------- */
@@ -867,7 +1001,8 @@ function boot() {
     extra: r => { const i = priceOn(r, UI.date, UI.n); return `<span class="tag ${tagCls(r, i, UI.n)}">${tagTxt(r, i)}</span>${shopLink(r)}`; },
   });
   $('#summary').addEventListener('click', e => {
-    const j = e.target.closest('[data-jump]'); if (j) { UI.date = j.dataset.jump; renderPrices(); }
+    const j = e.target.closest('[data-jump]'); if (j) { UI.date = j.dataset.jump; renderPrices(); return; }
+    if (e.target.closest('[data-mine]')) setMine(!UI.mine);
   });
   $('#sort').addEventListener('change', e => { UI.sort = e.target.value; renderPrices(); });
   $('#list').addEventListener('click', e => {
@@ -884,6 +1019,7 @@ function boot() {
   window.addEventListener('hashchange', () => show(location.hash.slice(1)));
 
   loadData();
+  bindPicker();
   show(location.hash.slice(1));
   renderMe();
   renderInstall();

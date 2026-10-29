@@ -149,6 +149,25 @@ a.btn{text-decoration:none;display:inline-block}
 .choice small{font-size:13px;opacity:.85}
 .modechip{font-size:12px;border:2px solid var(--line);background:var(--mint);color:var(--on);padding:0 6px}
 
+/* season-pass picker dialog */
+.dlg{border:3px solid var(--line);box-shadow:6px 6px 0 var(--shadow);background:var(--panel);color:var(--ink);padding:0;width:min(640px,calc(100% - 24px));max-height:min(90vh,900px);overflow-y:auto}
+.dlg::backdrop{background:rgba(18,22,65,.55)}
+.dlg .in{padding:16px;display:flex;flex-direction:column;gap:12px}
+.dlg h2{font-size:22px;padding-right:32px}
+.dlg .x{position:absolute;top:10px;right:10px;font:inherit;font-weight:700;background:var(--panel);color:var(--ink);border:2px solid var(--line);width:30px;height:30px;cursor:pointer}
+.nopass{font-size:15px;padding:8px 12px;text-align:left}
+.passlist{display:flex;flex-direction:column;gap:8px}
+.pass{font:inherit;color:var(--ink);text-align:left;background:var(--bg);border:3px solid var(--line);box-shadow:3px 3px 0 var(--shadow);padding:8px 10px;cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center}
+.pass:hover,.pass.cur{background:var(--gold);color:var(--on)}
+.pass b{font-weight:600;overflow-wrap:anywhere}
+.pass small{display:block;font-size:12px;color:var(--muted)}
+.pass:hover small,.pass.cur small{color:var(--on)}
+.pass .pp{text-align:right;font-weight:700;white-space:nowrap}
+.pass:active{transform:translate(3px,3px);box-shadow:none}
+.pass:focus-visible,.dlg .x:focus-visible{outline:3px dashed var(--pink);outline-offset:3px}
+.minebar{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;border:3px solid var(--line);background:var(--gold);color:var(--on);padding:8px 12px;font-size:14px}
+.minebar.off{background:var(--bg);color:var(--ink);border-style:dashed}
+
 /* pass mode */
 .scene{border:3px solid var(--line);background:var(--scene);position:relative}
 .scene svg{width:100%;height:auto}

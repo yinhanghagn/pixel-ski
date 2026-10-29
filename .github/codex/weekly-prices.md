@@ -14,9 +14,10 @@
 3. 来源优先级：雪场官网（`shop` 字段就是官网）> bergfex.at / schneehoehen.de / skiresort.info / alti-mag.com 等价格汇总站。
    查不到可靠来源就**不要改**，绝不猜价格。
 4. 顺便确认 `shop` 还指向雪场官网（官网搬家了就换成新网址，必须是 `https://`）。
-5. 用欧洲央行（ECB）最新参考汇率更新 `fx.CHF`（1 CHF = 多少欧元）和 `fx.date`。
-6. 只要改了任何内容，就把顶层 `updated` 改成今天的日期；某个雪场的价格来源变了，就更新它的 `source`。
-7. 运行 `python3 tools/validate_prices.py`，有错误（✗）必须修好。
+5. 核对顶层 `passes`（季票 / 通票列表）：`price`（成人正价）、`earlyPrice` / `earlyUntil`（早鸟价和截止日，过期了也保留）、`season`（价格属于哪个雪季，新雪季价格公布后改成新雪季）、`resorts`（只能填 `resorts` 列表里已有的雪场 id）。
+6. 用欧洲央行（ECB）最新参考汇率更新 `fx.CHF`（1 CHF = 多少欧元）和 `fx.date`。
+7. 只要改了任何内容，就把顶层 `updated` 改成今天的日期；某个雪场的价格来源变了，就更新它的 `source`。
+8. 运行 `python3 tools/validate_prices.py`，有错误（✗）必须修好。
 
 ## 数据规则
 
