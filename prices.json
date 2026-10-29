@@ -139,7 +139,8 @@
       "earlyUntil": "2026-10-31",
       "season": "2026/27",
       "covers": "以因斯布鲁克周边为主的全年卡，32 个滑雪场（Stubai 冰川、Axamer Lizum、Kühtai、Gurgl、Seefeld Rosshütte 等）加游泳馆等休闲设施。",
-      "resorts": ["stubai", "axams", "kuehtai", "gurgl", "seefeld", "schlick", "bergeralm", "hochkoessen", "kappl", "galtuer"],
+      "resorts": ["stubai", "axams", "kuehtai", "gurgl", "seefeld", "schlick", "bergeralm", "hochkoessen", "kappl", "galtuer", "arlberg", "ischgl"],
+      "limits": {"arlberg": 3, "ischgl": 3},
       "url": "https://www.freizeitticket.at/",
       "source": "https://www.freizeitticket.at/ticket/preise/",
       "note": "全年卡（2026-10-01 至 2027-09-30）。Ski Arlberg 和 Ischgl 只能各去 3 次。"
@@ -226,10 +227,11 @@
       "earlyUntil": "2026-11-15",
       "season": "2026/27",
       "covers": "蒂罗尔州西部（Oberland 和 Außerfern）全年卡，3 个冰川和约 25 个滑雪及徒步区，含 Sölden、Gurgl、Pitztal、Kaunertal、Serfaus-Fiss-Ladis、Nauders、Zugspitzarena 等。",
-      "resorts": ["soelden", "gurgl", "vent", "pitztal", "kaunertal", "hochzeiger", "nauders", "sfl", "ehrwald", "venet", "kappl", "galtuer"],
+      "resorts": ["soelden", "gurgl", "vent", "pitztal", "kaunertal", "hochzeiger", "nauders", "sfl", "ehrwald", "venet", "kappl", "galtuer", "ischgl"],
+      "limits": {"ischgl": 3},
       "url": "https://tirol-regio.at/",
       "source": "https://tirol-regio.at/tarife/",
-      "note": "全年卡（2026-10-01 至 2027-09-30）。部分合作雪场限次数。"
+      "note": "全年卡（2026-10-01 至 2027-09-30）。Ischgl（Silvrettaseilbahn）每季可滑 3 天，演唱会日和晚间活动除外；部分合作雪场限次数。"
     },
     {
       "id": "ischgl-samnaun-season",
@@ -254,7 +256,8 @@
       "earlyUntil": "2026-12-08",
       "season": "2026/27",
       "covers": "Montafon、Bludenz、Walgau、Brandnertal 全部缆车的全年卡（冬季加 2027 夏季），含滑雪巴士。",
-      "resorts": ["montafon", "gargellen", "brandnertal", "golm"],
+      "resorts": ["montafon", "gargellen", "brandnertal", "golm", "jungfrau", "adelboden", "aletsch", "engelberg"],
+      "limits": {"jungfrau": 3, "adelboden": 3, "aletsch": 3, "engelberg": 3},
       "url": "https://www.montafon.at/gargellen/en/plan-your-trip/prices/annual-pass",
       "source": "https://www.montafon.at/gargellen/en/plan-your-trip/prices/annual-pass",
       "note": "附送 AlpsPass 的 4 个瑞士雪场各 3 天。不含 Sonnenkopf。"
@@ -358,7 +361,8 @@
       "earlyUntil": "2026-04-30",
       "season": "2026/27",
       "covers": "格劳宾登三大雪场 Davos Klosters、Arosa Lenzerheide、Flims Laax Falera 冬夏无限次，另含 Jungfrau、Engelberg-Titlis、Adelboden-Lenk、Aletsch Arena 各 3 个自选日。",
-      "resorts": ["davos", "laax", "aroslenz"],
+      "resorts": ["davos", "laax", "aroslenz", "jungfrau", "engelberg", "adelboden", "aletsch"],
+      "limits": {"jungfrau": 3, "engelberg": 3, "adelboden": 3, "aletsch": 3},
       "url": "https://www.davosklostersmountains.ch/en/mountains/webshop/annualpass/topcard-tickets",
       "source": "https://www.davos.ch/en/discover/mountains-in-davos-klosters/prices-tickets",
       "note": "这三个雪场不单独卖季票，TOPCARD 就是它们的季票。"
@@ -373,7 +377,8 @@
       "earlyUntil": "2026-12-15",
       "season": "2026/27",
       "covers": "Jungfrau Ski Region、Adelboden-Lenk、Aletsch Arena、Engelberg-Titlis 全季（2026-11-01 至 2027-04-30），另含 LAAX、Davos、Arosa Lenzerheide、Portes du Soleil、4 Vallées、Montafon、Scuol 各 3 个自选日。",
-      "resorts": ["jungfrau", "adelboden", "aletsch", "engelberg"],
+      "resorts": ["jungfrau", "adelboden", "aletsch", "engelberg", "laax", "davos", "aroslenz", "portesdusoleil", "portesdusoleil-fr", "verbier", "montafon", "scuol"],
+      "limits": {"laax": 3, "davos": 3, "aroslenz": 3, "portesdusoleil": 3, "portesdusoleil-fr": 3, "verbier": 3, "montafon": 3, "scuol": 3},
       "url": "https://www.alpspass.ski",
       "source": "https://www.jungfrau.ch/de-ch/unternehmen/news/der-alpspass-startet-mit-zusaetzlichen-angeboten-in-die-zweite-saison/",
       "note": "接替了原来的 Top4 通票。不含 Eigergletscher–Jungfraujoch 段。"
@@ -829,6 +834,7 @@
       "season": "2026/27",
       "covers": "全球 70 多个目的地；欧洲：伊施格尔、基茨比厄尔、圣莫里茨、采尔马特、霞慕尼、Megève，每地最多 7 天，需要预约。",
       "resorts": ["ischgl", "kitz", "stmoritz", "zermatt", "chamonix", "evasion"],
+      "limits": {"ischgl": 7, "kitz": 7, "stmoritz": 7, "zermatt": 7, "chamonix": 7, "evasion": 7},
       "url": "https://www.ikonpass.com/en/shop-passes/ikon-pass",
       "source": "https://www.ikonpass.com/en/shop-passes/ikon-pass",
       "note": "美元价，按汇率折成欧元。每地最多 7 天，需要预约。"
@@ -844,6 +850,7 @@
       "season": "2026/27",
       "covers": "Ikon 入门版；欧洲目的地与 Ikon Pass 相同，每地最多 5 天，有黑名单日期。",
       "resorts": ["ischgl", "kitz", "stmoritz", "zermatt", "chamonix", "evasion"],
+      "limits": {"ischgl": 5, "kitz": 5, "stmoritz": 5, "zermatt": 5, "chamonix": 5, "evasion": 5},
       "url": "https://www.ikonpass.com/en/shop-passes/ikon-base-pass",
       "source": "https://www.ikonpass.com/en/shop-passes/ikon-base-pass",
       "note": "美元价。每地最多 5 天，圣诞、新年和部分周末不能用。"
@@ -859,6 +866,7 @@
       "season": "2026/27",
       "covers": "Vail 全球通票；欧洲：安德马特、Crans-Montana 不限天数，Verbier 连续 5 天，三峡谷连续 7 天，Saalbach/Kitzsteinhorn/Schmittenhöhe 5 天，Zillertal 5 天，Silvretta Montafon 5 天，Sölden 5 天，Ski Arlberg 连续 3 天（须住合作酒店）。",
       "resorts": ["andermatt", "cransmontana", "verbier", "3vallees", "courchevel", "valthorens", "menuires", "saalbach", "kitzsteinhorn", "schmitten", "mayrhofen", "zillarena", "hochzillertal", "spieljoch", "montafon", "soelden", "arlberg"],
+      "limits": {"verbier": 5, "3vallees": 7, "courchevel": 7, "valthorens": 7, "menuires": 7, "saalbach": 5, "kitzsteinhorn": 5, "schmitten": 5, "mayrhofen": 5, "zillarena": 5, "hochzillertal": 5, "spieljoch": 5, "montafon": 5, "soelden": 5, "arlberg": 3},
       "url": "https://www.epicpass.com/passes/epic-pass.aspx",
       "source": "https://www.epicorikon.com/news/epic-pass-prices-increasing-october-2026",
       "note": "美元价。Saalbach/Kitzsteinhorn/Schmittenhöhe 合计 5 天；Ski Arlberg 要住合作酒店。"
@@ -874,6 +882,7 @@
       "season": "2026/27",
       "covers": "Epic 本地版；欧洲只含安德马特、Crans-Montana 各 5 天，Verbier 4 Vallées 连续 5 天（高峰日期不能用）。",
       "resorts": ["andermatt", "cransmontana", "verbier"],
+      "limits": {"andermatt": 5, "cransmontana": 5, "verbier": 5},
       "url": "https://www.epicpass.com/passes/epic-local-pass.aspx",
       "source": "https://www.epicorikon.com/news/epic-pass-prices-increasing-october-2026",
       "note": "美元价。Verbier 高峰日期不能用。"
@@ -888,6 +897,7 @@
       "season": "2026/27",
       "covers": "全球 27 个目的地，每地 2 天，额外天数半价；欧洲只有霞慕尼和 Megève。",
       "resorts": ["chamonix", "evasion"],
+      "limits": {"chamonix": 2, "evasion": 2},
       "url": "https://mountaincollective.com",
       "source": "https://mountaincollective.com",
       "note": "美元价。每地 2 天，额外天数半价。"

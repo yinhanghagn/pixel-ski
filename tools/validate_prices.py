@@ -16,8 +16,8 @@ ROOT = Path(__file__).resolve().parent.parent
 DATE = re.compile(r'^\d{4}-\d{2}-\d{2}$')
 ID = re.compile(r'^[a-z0-9][a-z0-9-]*$')
 TOP_KEYS = {'season', 'updated', 'currency', 'range', 'tiers', 'notice', 'sources', 'resorts', 'countries', 'fx', 'passes'}
-PASS_KEYS = {'id', 'name', 'country', 'currency', 'price', 'earlyPrice', 'earlyUntil', 'season', 'covers', 'resorts', 'url',
-             'source', 'note'}
+PASS_KEYS = {'id', 'name', 'country', 'currency', 'price', 'earlyPrice', 'earlyUntil', 'season', 'covers', 'resorts', 'limits',
+             'url', 'source', 'note'}
 PASS_COUNTRIES = {'AT', 'CH', 'FR', 'DE', 'INT'}
 PASS_MIN, PASS_MAX = 150, 4000          # plausible adult season-pass price
 RESORT_KEYS = {'id', 'name', 'sub', 'country', 'state', 'currency', 'price', 'multi', 'open', 'close', 'periods',
@@ -213,6 +213,15 @@ def check_passes(rep, passes, resort_ids, currencies):
         unknown = [r for r in p.get('resorts', []) if r not in resort_ids]
         if unknown:
             rep.err(where, f'resorts 里有不存在的雪场 id：{", ".join(unknown)}')
+        limits = p.get('limits', {})
+        if not isinstance(limits, dict):
+            rep.err(where, 'limits 必须是 {"雪场 id": 天数} 的对象')
+        else:
+            for rid, days in limits.items():
+                if rid not in p.get('resorts', []):
+                    rep.err(where, f'limits 里的 {rid} 也要写进 resorts')
+                if not (isinstance(days, int) and 1 <= days <= 30):
+                    rep.err(where, f'limits["{rid}"] 必须是 1–30 的整数天数')
         if not str(p.get('url', 'https://')).startswith('https://'):
             rep.err(where, 'url 必须是 https:// 开头')
 
@@ -225,7 +234,7 @@ def diff(old, new):
     op = {p['id']: p for p in old.get('passes', []) if isinstance(p, dict) and 'id' in p}
     for p in new.get('passes', []):
         if isinstance(p, dict) and p.get('id') in op:
-            for k in ('price', 'earlyPrice', 'season', 'resorts'):
+            for k in ('price', 'earlyPrice', 'season', 'resorts', 'limits'):
                 if op[p['id']].get(k) != p.get(k):
                     lines.append(f'通票 {p["id"]}: {k} {json.dumps(op[p["id"]].get(k), ensure_ascii=False)} → {json.dumps(p.get(k), ensure_ascii=False)}')
         elif isinstance(p, dict):

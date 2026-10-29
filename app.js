@@ -133,6 +133,9 @@ function normPass(e) {
     price: +e.price, early: isFinite(e.earlyPrice) && e.earlyPrice > 0 ? +e.earlyPrice : null, earlyUntil: okDate(e.earlyUntil) ? e.earlyUntil : null,
     season: String(e.season || ''), covers: String(e.covers || ''), note: String(e.note || ''),
     resorts: Array.isArray(e.resorts) ? e.resorts.filter(id => RBY[id]) : [],
+    // resorts the pass only covers for a few days a season, e.g. { ischgl: 3 }
+    limits: Object.fromEntries(Object.entries(e.limits && typeof e.limits === 'object' ? e.limits : {})
+      .filter(([id, d]) => RBY[id] && Number.isInteger(d) && d > 0)),
     url: /^https:\/\//.test(e.url || '') ? e.url : '',
   };
 }
@@ -416,7 +419,12 @@ function detail(r) {
   const op = i.s === 'pre' ? openingPrice(r, n) : null;
   if (op) head += ` · 开季当天 ${money(op.p, r.cur)}`;
   bits.push(`<p>${head}</p>`);
-  if (inMyPass(r)) bits.push(`<p class="note">🎫 你的 ${esc(myPass().name)} 能滑这里，不用另买票。</p>`);
+  if (inMyPass(r)) {
+    const lim = passLimit(r), used = daysLoggedAt(r.id);
+    bits.push(`<p class="note">🎫 ${lim
+      ? `你的 ${esc(myPass().name)} 在这里每季可以滑 ${lim} 天（已记 ${used} 天${used >= lim ? '，用完了' : ''}），超出的天数要另买票。`
+      : `你的 ${esc(myPass().name)} 能滑这里，不用另买票。`}</p>`);
+  }
   bits.push(`<p class="note">开季：${r.open ? fmtDate(r.open) : '未公布'} · 闭季：${r.close ? fmtDate(r.close) : '未公布'}</p>`);
   bits.push(ticketTable(r));
   // price periods for the selected ticket length only
@@ -480,7 +488,8 @@ function renderPrices() {
     ${tile('最便宜', lo)}${tile('最贵', hi)}${preseasonHint(rows)}`;
   $('#list').innerHTML = rows.length ? rows.map(({ r, m, i, op }) => {
     const ex = UI.open === r.id;
-    const sub = [!UI.mine && inMyPass(r) ? '🎫 通票能滑' : '', UI.country === 'all' ? PX.countries[r.c] || r.c : '', r.st, r.x, m && m.via,
+    const lim = passLimit(r);
+    const sub = [lim ? `🎫 通票可滑 ${lim} 天` : !UI.mine && inMyPass(r) ? '🎫 通票能滑' : '', UI.country === 'all' ? PX.countries[r.c] || r.c : '', r.st, r.x, m && m.via,
       i.s === 'open' && n > 1 ? `每天 ${money(i.p / n, r.cur)}` : '', i.s === 'open' && i.l ? i.l : '',
       op ? `开季后 ${money(op.p, r.cur)}` : '',
       i.s === 'dyn' && r.from != null ? `约 ${money(r.from, r.cur)} 起` : '', !r.open && i.s === 'open' ? '开季日未公布' : ''].filter(Boolean).map(esc).join(' · ');
@@ -592,7 +601,10 @@ function hintText() {
   if (!FORM.resort && !FORM.rname.trim()) return `输入雪场名（中文、别名、拼错几个字母都行），会按当天的${what}门市价自动填金额。`;
   if (!r) return `“${FORM.rname.trim()}”不在列表里，会按你写的名字记录，金额请手填。`;
   const mp = myPass();
-  const outside = mp && mp.resorts.length && !inMyPass(r) ? `⚠ ${r.n} 不在 ${mp.name} 里，这天一般要另外买票。` : '';
+  const lim = passLimit(r), used = lim ? daysLoggedAt(r.id) : 0;
+  const outside = mp && mp.resorts.length && !inMyPass(r) ? `⚠ ${r.n} 不在 ${mp.name} 里，这天一般要另外买票。`
+    : lim && used + n > lim ? `⚠ ${mp.name} 在 ${r.n} 每季只能滑 ${lim} 天，已经记了 ${used} 天，超出的要另外买票。`
+    : lim ? `🎫 这是 ${mp.name} 在 ${r.n} 的第 ${used + 1}${n > 1 ? `–${used + n}` : ''} / ${lim} 天。` : '';
   const i = priceOn(r, FORM.date, n);
   if (i.s !== 'open') return `${outside}${r.n} 这天${i.txt}，请手动填金额。`;
   const conv = r.cur !== 'EUR' ? `（${money(i.p, r.cur)}，按 1 ${r.cur} ≈ ${num2(PX.fx[r.cur], 'de-AT')} € 换算）` : '';
@@ -615,6 +627,8 @@ const PK = { step: 'list', region: 'all', q: '', id: null };
 const passBy = id => PX.passes.find(p => p.id === id) || null;
 const myPass = () => (isPass() && D.settings.passId ? passBy(D.settings.passId) : null);
 const inMyPass = r => { const p = myPass(); return !!(p && p.resorts.includes(r.id)); };
+const passLimit = r => { const p = myPass(); return p && p.limits[r.id] ? p.limits[r.id] : null; };
+const daysLoggedAt = id => D.days.filter(d => d.resortId === id).reduce((s, d) => s + daysOf(d), 0);
 
 function openPassPicker(step = 'list') {
   Object.assign(PK, { step, region: 'all', q: '', id: null });
@@ -650,7 +664,7 @@ function pickerList() {
 function pickerConfirm(p) {
   // most season passes are bought at the early-bird price, so start from that one
   const v = toEUR(p.early || p.price, p.cur);
-  const names = p.resorts.map(id => RBY[id].n);
+  const names = p.resorts.map(id => RBY[id].n + (p.limits[id] ? `（${p.limits[id]} 天）` : ''));
   const ended = p.earlyUntil && p.earlyUntil < localToday();
   const early = p.early ? `早鸟价 ${money(p.early, p.cur)}${p.earlyUntil ? `（${ended ? '已于' : ''}${fmtMD(p.earlyUntil)}${ended ? '截止' : '前'}）` : ''}。` : '';
   return `<div><h2>${esc(p.name)}</h2><p class="sub">${esc(PASS_REGION[p.c] || p.c)} · ${esc(p.covers)}</p></div>
