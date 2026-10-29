@@ -31,7 +31,7 @@ function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = fal
 
 /* ---------- price data: loaded from prices.json ---------- */
 const STATE_ORDER = ['Tirol', 'Salzburg', 'Vorarlberg', 'Steiermark', 'Kärnten', 'Oberösterreich', 'Niederösterreich', 'Wien', 'Burgenland'];
-const COUNTRY_DEFAULT = { AT: '奥地利', CH: '瑞士', FR: '法国' };
+const COUNTRY_DEFAULT = { AT: '奥地利', CH: '瑞士', FR: '法国', DE: '德国' };
 const PX = {
   loaded: false, season: '', updated: '', range: { from: '2026-09-01', to: '2027-06-30' }, tiers: { cheap: 65, pricey: 79 },
   notice: '', sources: [], skipped: 0, offline: false, countries: { ...COUNTRY_DEFAULT }, fx: { EUR: 1 }, fxNote: '', durations: [1],
@@ -44,12 +44,14 @@ const fold = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLow
   .replace(/ß/g, 'ss').replace(/([aou])e/g, '$1').replace(/[^a-z0-9㐀-鿿]+/g, ' ').trim();
 
 // Extra search keywords, so "瑞士", "蒂罗尔", "Savoie" or "冰川" suggest something.
-const COUNTRY_KEYS = { AT: ['奥地利', 'Österreich', 'Austria'], CH: ['瑞士', 'Schweiz', 'Switzerland', 'Suisse'], FR: ['法国', 'France', 'Frankreich'] };
+const COUNTRY_KEYS = { AT: ['奥地利', 'Österreich', 'Austria'], CH: ['瑞士', 'Schweiz', 'Switzerland', 'Suisse'], FR: ['法国', 'France', 'Frankreich'], DE: ['德国', 'Deutschland', 'Germany', 'Allemagne'] };
 const STATE_ZH = {
   Tirol: '蒂罗尔', Salzburg: '萨尔茨堡', Vorarlberg: '福拉尔贝格', Steiermark: '施蒂利亚', Kärnten: '克恩顿',
   Oberösterreich: '上奥地利', Niederösterreich: '下奥地利', Wallis: '瓦莱', Graubünden: '格劳宾登', Bern: '伯尔尼',
   Uri: '乌里', Obwalden: '上瓦尔登', Waadt: '沃州', 'St. Gallen': '圣加仑', Savoie: '萨瓦', 'Haute-Savoie': '上萨瓦',
   Isère: '伊泽尔', 'Hautes-Alpes': '上阿尔卑斯', 'Hautes-Pyrénées': '上比利牛斯',
+  Oberbayern: '上巴伐利亚', Allgäu: '阿尔高', Schwarzwald: '黑森林', Sauerland: '绍尔兰', Erzgebirge: '厄尔士山',
+  'Bayerischer Wald': '巴伐利亚森林', Fichtelgebirge: '菲希特尔山', 'Thüringer Wald': '图林根森林', Harz: '哈尔茨',
 };
 const GLACIER_KEYS = ['冰川', 'Gletscher', 'Glacier'];
 const regionKeys = (c, st) => [st, STATE_ZH[st], ...(COUNTRY_KEYS[c] || [])];
