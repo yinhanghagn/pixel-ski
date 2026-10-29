@@ -131,6 +131,7 @@ a.btn{text-decoration:none;display:inline-block}
 .cell.t-low{background:var(--mint)}.cell.t-mid{background:var(--sky)}.cell.t-high{background:var(--pink)}
 .cell.c-none{background:var(--panel);color:var(--ink)}
 .cell.c-none .dp{opacity:.45}
+.cell.guess{border-style:dashed}
 .cell.today .dn{text-decoration:underline;text-underline-offset:2px}
 .cell.sel{outline:3px solid var(--ink);outline-offset:1px}
 .cell:focus-visible{outline:2px dashed var(--pink)}

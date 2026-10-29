@@ -355,7 +355,10 @@ function monthsFor(r) {
 function calendar(r, n) {
   const today = localToday();
   const short = v => String(Math.round(v));
-  const head = `<p class="note">${ticketName(n)}每日价格（${r.cur === 'EUR' ? '€' : r.cur}，四舍五入）· 点日期切换：</p>`;
+  // without an opening date we don't know which days are really skiable: dashed cells, and say so
+  const guess = !r.open;
+  const head = `<p class="note">${ticketName(n)}每日价格（${r.cur === 'EUR' ? '€' : r.cur}，四舍五入）· 点日期切换：</p>`
+    + (guess ? `<p class="note">⚠ 这个雪场还没公布开季 / 闭季日期，虚线格子是按全季同价推的，不代表那天一定开门，请以官网为准。</p>` : '');
   return head + `<div class="cal">` + monthsFor(r).map(([y, m]) => {
     const first = parse(`${y}-${pad(m)}-01`), days = new Date(Date.UTC(y, m, 0)).getUTCDate();
     const lead = (first.getUTCDay() + 6) % 7;
@@ -363,7 +366,7 @@ function calendar(r, n) {
     for (let d = 1; d <= days; d++) {
       const ds = `${y}-${pad(m)}-${pad(d)}`, i = priceOn(r, ds, n);
       const lab = i.s === 'open' ? money(i.p, r.cur) : i.txt;
-      const cls = i.s === 'open' ? tagCls(r, i, n) : 'c-none';
+      const cls = i.s === 'open' ? tagCls(r, i, n) + (guess ? ' guess' : '') : 'c-none';
       cells += `<button class="cell ${cls}${ds === UI.date ? ' sel' : ''}${ds === today ? ' today' : ''}" data-day="${ds}" title="${fmtDate(ds)} · ${lab}" aria-label="${fmtDate(ds)} ${lab}">`
         + `<span class="dn">${d}</span><span class="dp num">${i.s === 'open' ? short(i.p) : '–'}</span></button>`;
     }
