@@ -3,7 +3,7 @@
 // - app files: served from cache at once and refreshed in the background (changes show on the next open).
 // - Google Fonts: cached after the first load.
 // Bump VERSION only if you want every installed copy to drop its old cache.
-const VERSION = 'v1';
+const VERSION = 'v2';
 const SHELL = `pixel-ski-shell-${VERSION}`;
 const FONTS = `pixel-ski-fonts-${VERSION}`;
 const CORE = [

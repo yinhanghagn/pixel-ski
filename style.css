@@ -61,14 +61,29 @@ a{color:inherit}
 .btn.sm{padding:2px 8px;font-size:13px;box-shadow:2px 2px 0 var(--shadow)}
 button:focus-visible,input:focus-visible,select:focus-visible,.row:focus-visible,.choice:focus-visible{outline:3px dashed var(--pink);outline-offset:3px}
 input,select{font:inherit;color:var(--ink);background:var(--bg);border:3px solid var(--line);padding:5px 8px;border-radius:0;min-width:0;width:100%}
-.datebox input,#sort{width:auto}
+.datebox input,#sort,#ticket{width:auto}
 .grow{flex:1 1 140px;width:auto}
-label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);min-width:0}
+label.f,div.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);min-width:0}
 .bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .datebox{display:flex;gap:6px;align-items:center}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{font:inherit;font-size:13px;background:var(--panel);color:var(--ink);border:2px solid var(--line);padding:2px 9px;cursor:pointer}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+.filters{display:flex;flex-direction:column;gap:8px}
+.chips.sm .chip{font-size:12px;padding:1px 7px}
+.seg{display:flex;gap:8px}
+.seg .chip{font-size:14px;padding:4px 12px;border-width:3px}
+
+/* search suggestions */
+.sugwrap{position:relative}
+.suggest{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:15;background:var(--panel);border:3px solid var(--line);box-shadow:4px 4px 0 var(--shadow);max-height:320px;overflow-y:auto}
+.sg{padding:6px 10px;cursor:pointer;display:flex;flex-direction:column;border-bottom:1px dashed var(--muted)}
+.sg:last-child{border-bottom:0}
+.sg b{font-weight:600;color:var(--ink)}
+.sg small{font-size:12px;color:var(--muted)}
+.sg.act,.sg:hover{background:var(--gold)}
+.sg.act b,.sg:hover b,.sg.act small,.sg:hover small{color:var(--on)}
+.sg-empty{padding:8px 10px;color:var(--muted);font-size:13px}
 
 /* price list */
 .summary{display:flex;flex-wrap:wrap;gap:10px}
@@ -92,6 +107,11 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mu
 .detail p{margin:0;font-size:13px}
 .periods{display:flex;flex-wrap:wrap;gap:6px}
 .periods span{font-size:12px;border:2px solid var(--line);padding:1px 7px;background:var(--panel)}
+.tickets{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px}
+.tickets > span{display:flex;flex-direction:column;border:2px solid var(--line);background:var(--panel);padding:4px 8px;font-size:13px;line-height:1.3}
+.tickets small{color:var(--muted);font-size:11px}
+.tickets > span.cur{background:var(--gold);color:var(--on)}
+.tickets > span.cur small{color:var(--on)}
 .cal{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
 .month h4{margin:0 0 4px;font-size:13px;font-weight:600}
 .mgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
@@ -126,6 +146,8 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mu
 .stamps{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;border:3px solid var(--line);padding:8px;background:var(--bg)}
 .slot{aspect-ratio:1;max-width:100%;border:2px dashed var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0}
 .slot.on{border:2px solid var(--line);background:var(--pink);color:var(--on)}
+.slot.on.multi{background:var(--gold)}
+.legend i.stamp-multi{background:var(--gold)}
 .slot svg{width:50%}
 .slot small{font-size:10px;line-height:1;font-variant-numeric:tabular-nums}
 .badges{display:flex;flex-wrap:wrap;gap:8px}
@@ -147,6 +169,7 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mu
 .stub .what{min-width:0}
 .stub .what b{font-weight:600;overflow-wrap:anywhere}
 .stub .what small{display:block;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
+.stub.multi{background:var(--panel);border-style:double;border-width:5px}
 .passhead{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
 .passcard{display:flex;flex-wrap:wrap;gap:10px;align-items:center;min-width:0}
 .passcard .ticket{background:var(--gold);color:var(--on);border:3px solid var(--line);padding:4px 10px;font-weight:700;overflow-wrap:anywhere}

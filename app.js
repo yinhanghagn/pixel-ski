@@ -8,10 +8,15 @@ const ymd = d => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getU
 const parse = s => new Date(s + 'T00:00:00Z');
 const addDays = (s, n) => { const d = parse(s); d.setUTCDate(d.getUTCDate() + n); return ymd(d); };
 const localToday = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
-const eur = v => v == null || !isFinite(v) ? '–' : v.toLocaleString('de-AT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+const num2 = (v, loc) => v.toLocaleString(loc, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const eur = v => v == null || !isFinite(v) ? '–' : num2(v, 'de-AT') + ' €';
+const money = (v, cur) => v == null || !isFinite(v) ? '–' : cur && cur !== 'EUR' ? `${cur} ${num2(v, 'de-CH')}` : eur(v);
+const round2 = v => Math.round(v * 100) / 100;
 const WD = ['日', '一', '二', '三', '四', '五', '六'];
 const fmtDate = s => { const d = parse(s); return `${d.getUTCMonth() + 1}月${d.getUTCDate()}日 周${WD[d.getUTCDay()]}`; };
+const fmtMD = s => { const d = parse(s); return `${d.getUTCMonth() + 1}月${d.getUTCDate()}日`; };
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const ticketName = n => (n === 1 ? '一日票' : `${n} 天票`);
 
 const LS_DATA = 'pixel-ski.data.v1';
 const LS_PRICES = 'pixel-ski.prices.v1';
@@ -24,24 +29,46 @@ function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = fal
 
 /* ---------- price data: loaded from prices.json ---------- */
 const STATE_ORDER = ['Tirol', 'Salzburg', 'Vorarlberg', 'Steiermark', 'Kärnten', 'Oberösterreich', 'Niederösterreich', 'Wien', 'Burgenland'];
-const PX = { loaded: false, season: '', updated: '', range: { from: '2026-09-01', to: '2027-06-30' }, tiers: { cheap: 65, pricey: 79 }, notice: '', sources: [], skipped: 0, offline: false };
-let R = [], RBY = {}, STATES = ['全部'];
+const COUNTRY_DEFAULT = { AT: '奥地利', CH: '瑞士', FR: '法国' };
+const PX = {
+  loaded: false, season: '', updated: '', range: { from: '2026-09-01', to: '2027-06-30' }, tiers: { cheap: 65, pricey: 79 },
+  notice: '', sources: [], skipped: 0, offline: false, countries: { ...COUNTRY_DEFAULT }, fx: { EUR: 1 }, fxNote: '', durations: [1],
+};
+let R = [], RBY = {};
 
-// Turn one prices.json entry into the compact shape the UI uses; null if it is unusable.
+// Remove accents and German umlaut spellings so "Soelden", "solden" and "Sölden" all match.
+const fold = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+  .replace(/ß/g, 'ss').replace(/([aou])e/g, '$1').replace(/[^a-z0-9㐀-鿿]+/g, ' ').trim();
+
+// Turn one prices.json entry into the shape the UI uses; null if it is unusable.
 function normResort(e) {
   if (!e || typeof e.id !== 'string' || !e.id || typeof e.name !== 'string' || typeof e.state !== 'string') return null;
   const okDate = s => typeof s === 'string' && DATE_RE.test(s);
   const num = v => typeof v === 'number' && isFinite(v) && v >= 0;
+  const multi = m => {
+    const out = {};
+    if (m && typeof m === 'object') for (const [k, v] of Object.entries(m)) { const n = parseInt(k, 10); if (n >= 2 && n <= 21 && num(v)) out[n] = v; }
+    return out;
+  };
   const r = {
     id: e.id, n: e.name, x: typeof e.sub === 'string' ? e.sub : '', st: e.state,
-    p: num(e.price) ? e.price : null, open: okDate(e.open) ? e.open : null, close: okDate(e.close) ? e.close : null,
-    dyn: !!e.dynamic, est: !!e.estimated, note: typeof e.note === 'string' ? e.note : '',
+    c: typeof e.country === 'string' ? e.country : 'AT', cur: typeof e.currency === 'string' ? e.currency : 'EUR',
+    p: num(e.price) ? e.price : null, multi: multi(e.multi),
+    open: okDate(e.open) ? e.open : null, close: okDate(e.close) ? e.close : null,
+    dyn: !!e.dynamic, from: num(e.fromPrice) ? e.fromPrice : null, est: !!e.estimated,
+    note: typeof e.note === 'string' ? e.note : '',
+    aliases: Array.isArray(e.aliases) ? e.aliases.filter(a => typeof a === 'string') : [],
+    per: [],
   };
   if (Array.isArray(e.periods)) {
-    const per = e.periods.filter(p => p && okDate(p.from) && okDate(p.to) && num(p.price)).map(p => [p.from, p.to, p.price, String(p.label || '')]);
-    if (per.length !== e.periods.length) console.warn('prices.json: 有时段格式不对，已忽略', e.id);
-    if (per.length) r.per = per;
+    r.per = e.periods.filter(p => p && okDate(p.from) && okDate(p.to) && (num(p.price) || p.multi))
+      .map(p => ({ from: p.from, to: p.to, p: num(p.price) ? p.price : null, label: String(p.label || ''), multi: multi(p.multi) }));
+    if (r.per.length !== e.periods.length) console.warn('prices.json: 有时段格式不对，已忽略', e.id);
   }
+  // search index
+  const keys = [[r.n, 'name'], ...r.aliases.map(a => [a, 'alias']), [r.x, 'sub'], [r.st, 'state']];
+  r._keys = keys.filter(k => k[0]).map(([raw, kind]) => { const f = fold(raw); return { raw, kind, f, c: f.replace(/ /g, ''), words: f.split(' ').filter(Boolean) }; });
+  r._words = [...new Set(r._keys.flatMap(k => k.words))];
   return r;
 }
 
@@ -56,15 +83,24 @@ function applyPrices(j) {
   }
   R = list;
   RBY = Object.fromEntries(R.map(r => [r.id, r]));
-  const rank = s => { const i = STATE_ORDER.indexOf(s); return i < 0 ? 99 : i; };
-  STATES = ['全部', ...[...new Set(R.map(r => r.st))].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b))];
   Object.assign(PX, {
     loaded: true, skipped,
     season: String(j.season || ''), updated: String(j.updated || ''), notice: String(j.notice || ''),
     sources: Array.isArray(j.sources) ? j.sources.filter(s => s && s.name && /^https?:\/\//.test(s.url || '')) : [],
+    countries: { ...COUNTRY_DEFAULT, ...(j.countries || {}) },
   });
   if (j.range && DATE_RE.test(j.range.from) && DATE_RE.test(j.range.to)) PX.range = { from: j.range.from, to: j.range.to };
   if (j.tiers && isFinite(j.tiers.cheap) && isFinite(j.tiers.pricey)) PX.tiers = { cheap: +j.tiers.cheap, pricey: +j.tiers.pricey };
+  PX.fx = { EUR: 1 };
+  PX.fxNote = '';
+  if (j.fx && typeof j.fx === 'object') {
+    for (const [k, v] of Object.entries(j.fx)) if (/^[A-Z]{3}$/.test(k) && isFinite(v) && v > 0) PX.fx[k] = +v;
+    const extra = Object.keys(PX.fx).filter(k => k !== 'EUR');
+    if (extra.length) PX.fxNote = `汇率：${extra.map(k => `1 ${k} ≈ ${num2(PX.fx[k], 'de-AT')} €`).join('，')}${j.fx.date ? `（${esc(j.fx.date)}）` : ''}`;
+  }
+  const ds = new Set([1]);
+  R.forEach(r => { Object.keys(r.multi).forEach(n => ds.add(+n)); r.per.forEach(p => Object.keys(p.multi).forEach(n => ds.add(+n))); });
+  PX.durations = [...ds].sort((a, b) => a - b);
 }
 
 async function loadPrices() {
@@ -80,23 +116,121 @@ async function loadPrices() {
     if (j) { try { applyPrices(j); PX.offline = true; } catch (e) { /* keep empty */ } }
   }
   UI.date = clampDate(UI.date);
-  FORM.date = clampFormDate(FORM.date);
-  renderStates(); renderPrices(); renderFooter(); renderMe();
+  if (!PX.durations.includes(UI.n)) UI.n = 1;
+  renderFilters(); renderPrices(); renderFooter(); renderMe();
 }
 
 const clampDate = s => s < PX.range.from ? PX.range.from : s > PX.range.to ? PX.range.to : s;
-const clampFormDate = s => DATE_RE.test(s) ? s : localToday();
+const toEUR = (v, cur) => (v == null ? null : cur === 'EUR' || !cur ? v : PX.fx[cur] ? v * PX.fx[cur] : null);
 
-function priceOn(r, d) {
+// Price of an n-day ticket starting on date d.
+function priceOn(r, d, n = 1) {
   if (r.open && d < r.open) return { s: 'pre', txt: '未开季' };
   if (r.close && d > r.close) return { s: 'post', txt: '已闭季' };
   if (r.dyn) return { s: 'dyn', txt: '动态价' };
-  if (r.p == null) return { s: 'na', txt: '未公布' };
-  for (const [a, b, p, l] of (r.per || [])) if (d >= a && d <= b) return { s: 'open', p, l };
-  return { s: 'open', p: r.p, l: r.per ? 'Hauptsaison' : '' };
+  if (n === 1) {
+    if (r.p == null) return { s: 'na', txt: '未公布' };
+    for (const p of r.per) if (p.p != null && d >= p.from && d <= p.to) return { s: 'open', p: p.p, l: p.label };
+    return { s: 'open', p: r.p, l: r.per.some(p => p.p != null) ? 'Hauptsaison' : '' };
+  }
+  for (const p of r.per) if (p.multi[n] != null && d >= p.from && d <= p.to) return { s: 'open', p: p.multi[n], l: p.label };
+  if (r.multi[n] != null) return { s: 'open', p: r.multi[n], l: r.per.some(p => p.multi[n] != null) ? 'Hauptsaison' : '' };
+  return { s: 'nomulti', txt: `无${n}天票数据` };
 }
-const tier = p => p <= PX.tiers.cheap ? 't-low' : p < PX.tiers.pricey ? 't-mid' : 't-high';
-const tagCls = i => i.s === 'open' ? tier(i.p) : i.s === 'dyn' ? 't-dyn' : 't-off';
+const perDayEUR = (r, i, n) => toEUR(i.p, r.cur) / n;
+const tier = e => e == null ? 't-mid' : e <= PX.tiers.cheap ? 't-low' : e < PX.tiers.pricey ? 't-mid' : 't-high';
+const tagCls = (r, i, n) => i.s === 'open' ? tier(perDayEUR(r, i, n)) : i.s === 'dyn' ? 't-dyn' : 't-off';
+
+/* ---------- fuzzy resort search ---------- */
+function lev(a, b, max) {
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    let rowMin = i;
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      rowMin = Math.min(rowMin, cur[j]);
+    }
+    if (rowMin > max) return max + 1;
+    prev = cur;
+  }
+  return prev[b.length];
+}
+// Returns { score, via } — via is the alias that matched (for showing "别名：圣安东").
+function scoreResort(r, qf) {
+  const qc = qf.replace(/ /g, '');
+  if (!qc) return null;
+  let best = 0, via = null;
+  for (const k of r._keys) {
+    const isName = k.kind === 'name';
+    let s = 0;
+    if (k.c.startsWith(qc)) s = isName ? 100 : 85;
+    else if (k.words.some(w => w.startsWith(qc))) s = isName ? 90 : 75;
+    else if (k.c.includes(qc)) s = isName ? 70 : 55;
+    if (k.kind === 'state' && s) s -= 30;
+    if (s > best) { best = s; via = k; }
+  }
+  const toks = qf.split(' ').filter(Boolean);
+  if (!best && toks.length > 1 && toks.every(t => r._words.some(w => w.startsWith(t)))) best = 50;
+  if (!best && /[a-z]/.test(qc) && qc.length >= 3) {
+    // typo tolerance: every token must be close to some word (or the start of one)
+    let tot = 0;
+    for (const t of toks.filter(t => t.length >= 3)) {
+      const lim = t.length >= 7 ? 2 : 1;
+      let m = lim + 1;
+      for (const w of r._words) {
+        m = Math.min(m, lev(t, w, lim), w.length > t.length ? lev(t, w.slice(0, t.length), lim) : lim + 1);
+        if (!m) break;
+      }
+      if (m > lim) { tot = 0; break; }
+      tot += 30 - 8 * m;
+    }
+    best = tot;
+  }
+  return best > 0 ? { score: best, via: via && via.kind === 'alias' ? via.raw : null } : null;
+}
+function searchResorts(q, pool = R) {
+  const qf = fold(q);
+  if (!qf) return [];
+  return pool.map(r => ({ r, m: scoreResort(r, qf) })).filter(x => x.m)
+    .sort((a, b) => b.m.score - a.m.score || a.r.n.localeCompare(b.r.n, 'de'));
+}
+
+// A dropdown of suggestions under a text input.
+function attachSuggest(input, { onPick, onType, max = 8 }) {
+  const box = document.createElement('div');
+  box.className = 'suggest'; box.setAttribute('role', 'listbox'); box.id = input.id + '-list'; box.hidden = true;
+  input.parentElement.classList.add('sugwrap');
+  input.parentElement.appendChild(box);
+  input.setAttribute('role', 'combobox'); input.setAttribute('aria-autocomplete', 'list');
+  input.setAttribute('aria-controls', box.id); input.setAttribute('aria-expanded', 'false'); input.autocomplete = 'off';
+  let items = [], act = -1;
+  const close = () => { box.hidden = true; input.setAttribute('aria-expanded', 'false'); };
+  const draw = () => {
+    if (!items.length) {
+      box.innerHTML = input.value.trim() ? `<div class="sg-empty">没有相近的雪场</div>` : '';
+      box.hidden = !input.value.trim(); input.setAttribute('aria-expanded', String(!box.hidden)); return;
+    }
+    box.innerHTML = items.map(({ r, m }, k) => `<div class="sg${k === act ? ' act' : ''}" role="option" id="${box.id}-${k}" data-i="${k}" aria-selected="${k === act}">
+      <b>${esc(r.n)}</b><small>${esc([PX.countries[r.c] || r.c, r.st].join(' · '))}${m.via ? ` · 别名：${esc(m.via)}` : ''}</small></div>`).join('');
+    box.hidden = false; input.setAttribute('aria-expanded', 'true');
+    if (act >= 0) input.setAttribute('aria-activedescendant', `${box.id}-${act}`); else input.removeAttribute('aria-activedescendant');
+  };
+  const refresh = () => { items = searchResorts(input.value).slice(0, max); act = -1; draw(); };
+  const pick = k => { const it = items[k]; if (!it) return; input.value = it.r.n; close(); onPick(it.r); };
+  input.addEventListener('input', () => { if (onType) onType(input.value); refresh(); });
+  input.addEventListener('focus', () => { if (input.value.trim()) refresh(); });
+  input.addEventListener('blur', () => setTimeout(close, 150));
+  input.addEventListener('keydown', e => {
+    if (box.hidden || !items.length) return;
+    if (e.key === 'ArrowDown') { act = (act + 1) % items.length; draw(); e.preventDefault(); }
+    else if (e.key === 'ArrowUp') { act = (act - 1 + items.length) % items.length; draw(); e.preventDefault(); }
+    else if (e.key === 'Enter') { pick(act >= 0 ? act : 0); e.preventDefault(); }
+    else if (e.key === 'Escape') close();
+  });
+  box.addEventListener('mousedown', e => { e.preventDefault(); const o = e.target.closest('[data-i]'); if (o) pick(+o.dataset.i); });
+}
 
 /* ---------- pixel sprites ---------- */
 const PENGUIN = [
@@ -120,54 +254,83 @@ function sprite(map, x, y, sub = {}) {
 const icon = (map, w) => `<svg class="px" viewBox="0 0 ${map[0].length} ${map.length}" width="${w}" aria-hidden="true">${sprite(map, 0, 0)}</svg>`;
 
 /* ---------- UI state ---------- */
-const UI = { view: 'prices', date: localToday(), st: '全部', q: '', sort: 'asc', open: null, editSettings: false, pickMode: null, confirmDel: null };
+const UI = { view: 'prices', date: localToday(), n: 1, country: 'all', st: '全部', q: '', sort: 'asc', open: null, editSettings: false, pickMode: null, confirmDel: null };
 
 /* ---------- prices view ---------- */
-function renderStates() {
-  if (!STATES.includes(UI.st)) UI.st = '全部';
-  $('#states').innerHTML = STATES.map(s => `<button class="chip" data-st="${esc(s)}" aria-pressed="${s === UI.st}">${esc(s)}</button>`).join('');
+function stateRank(s) { const i = STATE_ORDER.indexOf(s); return i < 0 ? 99 : i; }
+function renderFilters() {
+  const countries = [...new Set(R.map(r => r.c))];
+  if (UI.country !== 'all' && !countries.includes(UI.country)) UI.country = 'all';
+  const cc = [['all', '全部国家'], ...countries.map(c => [c, PX.countries[c] || c])];
+  let html = `<div class="chips">${cc.map(([k, l]) => `<button class="chip" data-country="${esc(k)}" aria-pressed="${k === UI.country}">${esc(l)}</button>`).join('')}</div>`;
+  if (UI.country !== 'all') {
+    const sts = [...new Set(R.filter(r => r.c === UI.country).map(r => r.st))].sort((a, b) => stateRank(a) - stateRank(b) || a.localeCompare(b));
+    if (!sts.includes(UI.st)) UI.st = '全部';
+    html += `<div class="chips sm">${['全部', ...sts].map(s => `<button class="chip" data-st="${esc(s)}" aria-pressed="${s === UI.st}">${s === '全部' ? '全部地区' : esc(s)}</button>`).join('')}</div>`;
+  } else UI.st = '全部';
+  $('#states').innerHTML = html;
+  $('#ticket').innerHTML = PX.durations.map(n => `<option value="${n}"${n === UI.n ? ' selected' : ''}>${ticketName(n)}</option>`).join('');
   const t = PX.tiers;
-  $('#legend').innerHTML = `<span><i class="t-low"></i>≤ ${t.cheap} €</span><span><i class="t-mid"></i>${t.cheap}–${t.pricey} €</span><span><i class="t-high"></i>≥ ${t.pricey} €</span>
-    <span><i class="t-dyn"></i>动态定价</span><span><i class="t-off"></i>未开 / 已闭 / 未公布</span>`;
+  $('#legend').innerHTML = `<span>按每天折合欧元：</span><span><i class="t-low"></i>≤ ${t.cheap} €</span><span><i class="t-mid"></i>${t.cheap}–${t.pricey} €</span><span><i class="t-high"></i>≥ ${t.pricey} €</span>
+    <span><i class="t-dyn"></i>动态定价</span><span><i class="t-off"></i>未开 / 已闭 / 暂无数据</span>`;
   const di = $('#date'); di.min = PX.range.from; di.max = PX.range.to;
-  if (PX.season) $('#tagline').textContent = `奥地利 ${PX.season} 雪季 · 每日雪票价格 + 我的雪季记录`;
+  if (PX.season) $('#tagline').textContent = `阿尔卑斯 ${PX.season} 雪季 · 雪票价格 + 我的雪季记录`;
 }
 
 function monthsFor(r) {
-  const start = (r.open || PX.range.from).slice(0, 7);
-  const end = (r.close || PX.range.to).slice(0, 7);
+  const lo = r.open && r.open > PX.range.from ? r.open : PX.range.from;
+  const hi = r.close && r.close < PX.range.to ? r.close : PX.range.to;
   const out = [];
-  let [y, m] = start.split('-').map(Number);
-  while (`${y}-${pad(m)}` <= end && out.length < 12) { out.push([y, m]); m++; if (m > 12) { m = 1; y++; } }
+  let [y, m] = lo.slice(0, 7).split('-').map(Number);
+  while (`${y}-${pad(m)}` <= hi.slice(0, 7) && out.length < 12) { out.push([y, m]); m++; if (m > 12) { m = 1; y++; } }
   return out;
 }
-function calendar(r) {
+function calendar(r, n) {
   return `<div class="cal">` + monthsFor(r).map(([y, m]) => {
     const first = parse(`${y}-${pad(m)}-01`), days = new Date(Date.UTC(y, m, 0)).getUTCDate();
     const lead = (first.getUTCDay() + 6) % 7;
     let cells = ['一', '二', '三', '四', '五', '六', '日'].map(w => `<span class="wd">${w}</span>`).join('') + '<span></span>'.repeat(lead);
     for (let d = 1; d <= days; d++) {
-      const ds = `${y}-${pad(m)}-${pad(d)}`, i = priceOn(r, ds);
-      const lab = i.s === 'open' ? eur(i.p) : i.txt;
-      cells += `<button class="cell ${tagCls(i)}${ds === UI.date ? ' sel' : ''}" data-day="${ds}" title="${fmtDate(ds)} · ${lab}" aria-label="${fmtDate(ds)} ${lab}">${d}</button>`;
+      const ds = `${y}-${pad(m)}-${pad(d)}`, i = priceOn(r, ds, n);
+      const lab = i.s === 'open' ? money(i.p, r.cur) : i.txt;
+      cells += `<button class="cell ${tagCls(r, i, n)}${ds === UI.date ? ' sel' : ''}" data-day="${ds}" title="${fmtDate(ds)} · ${lab}" aria-label="${fmtDate(ds)} ${lab}">${d}</button>`;
     }
     return `<div class="month"><h4>${y}年${m}月</h4><div class="mgrid">${cells}</div></div>`;
   }).join('') + `</div>`;
 }
+// Every ticket length this resort sells, priced for a start on the selected date.
+function ticketTable(r) {
+  const ns = new Set([1, ...Object.keys(r.multi).map(Number)]);
+  r.per.forEach(p => Object.keys(p.multi).forEach(k => ns.add(+k)));
+  const cells = [...ns].sort((a, b) => a - b).map(n => ({ n, i: priceOn(r, UI.date, n) })).filter(x => x.i.s === 'open');
+  if (cells.length < 2) return '';
+  return `<p class="note">${fmtMD(UI.date)} 出发的各种票：</p><div class="tickets">${cells.map(({ n, i }) =>
+    `<span${n === UI.n ? ' class="cur"' : ''}><b>${ticketName(n)}</b><span class="num">${money(i.p, r.cur)}</span><small>每天 ${money(i.p / n, r.cur)}</small></span>`).join('')}</div>`;
+}
 function detail(r) {
-  const i = priceOn(r, UI.date);
+  const n = UI.n, i = priceOn(r, UI.date, n);
   const bits = [];
-  bits.push(`<p><b>${fmtDate(UI.date)}</b>：${i.s === 'open' ? `${eur(i.p)}${i.l ? ` · ${esc(i.l)}` : ''}` : i.txt}</p>`);
+  let head = `<b>${fmtDate(UI.date)}${n > 1 ? ` 起的 ${n} 天票` : ''}</b>：`;
+  if (i.s === 'open') {
+    head += `${money(i.p, r.cur)}${n > 1 ? `（每天 ${money(i.p / n, r.cur)}）` : ''}${i.l ? ` · ${esc(i.l)}` : ''}`;
+    if (r.cur !== 'EUR' && toEUR(i.p, r.cur) != null) head += ` · 约 ${eur(toEUR(i.p, r.cur))}`;
+  } else head += i.txt;
+  bits.push(`<p>${head}</p>`);
   bits.push(`<p class="note">开季：${r.open ? fmtDate(r.open) : '未公布'} · 闭季：${r.close ? fmtDate(r.close) : '未公布'}</p>`);
-  if (r.per) {
+  bits.push(ticketTable(r));
+  // price periods for the selected ticket length only
+  const per = r.per.filter(p => (n === 1 ? p.p : p.multi[n]) != null);
+  const base = n === 1 ? r.p : r.multi[n];
+  if (per.length) {
     const md = s => s.slice(5).replace('-', '.');
-    bits.push(`<div class="periods">${r.per.map(([a, b, p, l]) => `<span>${esc(l)} ${md(a)}–${md(b)} · <b class="num">${eur(p)}</b></span>`).join('')}<span>其余日期 · <b class="num">${eur(r.p)}</b></span>${r.est ? '<span>⚠ 日期为推算</span>' : ''}</div>`);
+    bits.push(`<p class="note">${ticketName(n)}分时段价格：</p><div class="periods">${per.map(p =>
+      `<span>${esc(p.label)} ${md(p.from)}–${md(p.to)} · <b class="num">${money(n === 1 ? p.p : p.multi[n], r.cur)}</b></span>`).join('')}${base != null ? `<span>其余日期 · <b class="num">${money(base, r.cur)}</b></span>` : ''}${r.est ? '<span>⚠ 日期为推算</span>' : ''}</div>`);
   }
+  if (r.dyn) bits.push(`<p class="note">动态定价：价格随日期和需求变化，越早在官网买越便宜${r.from != null ? `，官网约 ${money(r.from, r.cur)} 起` : ''}。</p>`);
   if (r.note) bits.push(`<p class="note">${esc(r.note)}</p>`);
-  if (!r.dyn && r.p != null) bits.push(calendar(r));
-  else if (r.dyn) bits.push(`<p class="note">动态定价：越早在官网买越便宜，没有固定门市价。</p>`);
-  bits.push(`<div class="bar"><button class="btn gold sm" data-log="${esc(r.id)}">我在 ${fmtDate(UI.date)} 滑了这里 → 记一笔</button></div>`);
-  return `<div class="detail">${bits.join('')}</div>`;
+  if (!r.dyn && (r.p != null || Object.keys(r.multi).length)) bits.push(calendar(r, n));
+  bits.push(`<div class="bar"><button class="btn gold sm" data-log="${esc(r.id)}">我在 ${fmtDate(UI.date)} 滑了这里${n > 1 ? `（${n} 天票）` : ''} → 记一笔</button></div>`);
+  return `<div class="detail">${bits.filter(Boolean).join('')}</div>`;
 }
 function renderPrices() {
   $('#date').value = UI.date;
@@ -176,46 +339,49 @@ function renderPrices() {
     $('#list').innerHTML = `<p class="empty">价格数据没加载出来。请联网后重新打开 App。</p>`;
     return;
   }
-  const d = UI.date;
-  const rows = R.filter(r => (UI.st === '全部' || r.st === UI.st) && (!UI.q || `${r.n} ${r.x} ${r.st}`.toLowerCase().includes(UI.q)))
-    .map(r => ({ r, i: priceOn(r, d) }));
-  const rank = i => i.s === 'open' ? 0 : i.s === 'dyn' ? 1 : i.s === 'na' ? 2 : 3;
-  rows.sort((a, b) => {
+  const d = UI.date, n = UI.n;
+  const pool = R.filter(r => (UI.country === 'all' || r.c === UI.country) && (UI.st === '全部' || r.st === UI.st));
+  const matches = UI.q ? searchResorts(UI.q, pool) : pool.map(r => ({ r, m: null }));
+  const rows = matches.map(({ r, m }) => ({ r, m, i: priceOn(r, d, n) }));
+  const rank = i => i.s === 'open' ? 0 : i.s === 'dyn' ? 1 : i.s === 'na' || i.s === 'nomulti' ? 2 : 3;
+  if (!UI.q) rows.sort((a, b) => {
     if (UI.sort === 'name') return a.r.n.localeCompare(b.r.n, 'de');
     return rank(a.i) - rank(b.i)
-      || (a.i.s === 'open' ? (UI.sort === 'asc' ? a.i.p - b.i.p : b.i.p - a.i.p) : 0)
+      || (a.i.s === 'open' ? (UI.sort === 'asc' ? 1 : -1) * (perDayEUR(a.r, a.i, n) - perDayEUR(b.r, b.i, n)) : 0)
       || a.r.n.localeCompare(b.r.n, 'de');
   });
-  const open = rows.filter(x => x.i.s === 'open');
-  const lo = open.length ? open.reduce((a, b) => (a.i.p <= b.i.p ? a : b)) : null;
-  const hi = open.length ? open.reduce((a, b) => (a.i.p >= b.i.p ? a : b)) : null;
-  const known = open.filter(x => x.r.open).length;
+  const open = rows.filter(x => x.i.s === 'open' && perDayEUR(x.r, x.i, n) != null);
+  const pick = cmp => open.length ? open.reduce((a, b) => (cmp(perDayEUR(a.r, a.i, n), perDayEUR(b.r, b.i, n)) ? a : b)) : null;
+  const lo = pick((a, b) => a <= b), hi = pick((a, b) => a >= b);
+  const tile = (label, x) => `<div class="sumtile"><small>${label}${n > 1 ? `（${n} 天票）` : ''}</small><b class="num">${x ? money(x.i.p, x.r.cur) : '–'}</b><small>${x ? esc(x.r.n) + (n > 1 ? ` · 每天 ${money(x.i.p / n, x.r.cur)}` : '') : '这天没有可查的价格'}</small></div>`;
   $('#summary').innerHTML = `
-    <div class="sumtile"><small>${fmtDate(d)}</small><b class="num">${open.length}<span style="font-size:14px"> 家有价</span></b><small>共 ${rows.length} 家，其中 ${known} 家已确认开季</small></div>
-    <div class="sumtile"><small>最便宜</small><b class="num">${lo ? eur(lo.i.p) : '–'}</b><small>${lo ? esc(lo.r.n) : '这天没有开放的雪场'}</small></div>
-    <div class="sumtile"><small>最贵</small><b class="num">${hi ? eur(hi.i.p) : '–'}</b><small>${hi ? esc(hi.r.n) : '–'}</small></div>`;
-  $('#list').innerHTML = rows.length ? rows.map(({ r, i }) => {
+    <div class="sumtile"><small>${fmtDate(d)}${n > 1 ? ' 出发' : ''}</small><b class="num">${open.length}<span style="font-size:14px"> 家有价</span></b><small>共 ${rows.length} 家${UI.q ? '匹配' : ''}</small></div>
+    ${tile('最便宜', lo)}${tile('最贵', hi)}`;
+  $('#list').innerHTML = rows.length ? rows.map(({ r, m, i }) => {
     const ex = UI.open === r.id;
-    const sub = [r.st, r.x, i.s === 'open' && i.l ? i.l : '', !r.open && i.s === 'open' ? '开季日未公布' : ''].filter(Boolean).map(esc).join(' · ');
+    const sub = [UI.country === 'all' ? PX.countries[r.c] || r.c : '', r.st, r.x, m && m.via ? `别名：${m.via}` : '',
+      i.s === 'open' && n > 1 ? `每天 ${money(i.p / n, r.cur)}` : '', i.s === 'open' && i.l ? i.l : '',
+      i.s === 'dyn' && r.from != null ? `约 ${money(r.from, r.cur)} 起` : '', !r.open && i.s === 'open' ? '开季日未公布' : ''].filter(Boolean).map(esc).join(' · ');
     return `<div class="item"><button class="row" data-id="${esc(r.id)}" aria-expanded="${ex}">
       <span class="rname"><b>${esc(r.n)}</b><small>${sub}</small></span>
-      <span class="tag ${tagCls(i)}">${i.s === 'open' ? eur(i.p) : i.txt}</span><span class="chev">›</span></button>
+      <span class="tag ${tagCls(r, i, n)}">${i.s === 'open' ? money(i.p, r.cur) : i.txt}</span><span class="chev">›</span></button>
       ${ex ? detail(r) : ''}</div>`;
-  }).join('') : `<p class="empty">没有找到这个雪场。换个关键词试试？</p>`;
+  }).join('') : `<p class="empty">${UI.q ? '没找到相近的雪场。试试只输入名字的前几个字母，或者换成村镇名。' : '这个筛选下没有雪场。'}</p>`;
 }
 
 /* ---------- my season: data ---------- */
 // settings: { mode: 'pass' | 'diary', passName, passPrice, compare }
-// day: { id, date, resortId, resortName, value, note, createdAt }
+// entry: { id, date, days, kind: 'day' | 'multi', resortId, resortName, value (EUR, whole ticket), note, createdAt }
 const D = { settings: null, days: [] };
+const daysOf = e => Math.max(1, parseInt(e.days, 10) || 1);
+function validDay(d) { return d && DATE_RE.test(d.date) && typeof d.resortName === 'string' && isFinite(+d.value) && daysOf(d) <= 30; }
 function loadData() {
   const j = lsGet(LS_DATA);
   if (j) { D.settings = j.settings || null; D.days = Array.isArray(j.days) ? j.days.filter(validDay) : []; }
 }
-function validDay(d) { return d && DATE_RE.test(d.date) && typeof d.resortName === 'string' && isFinite(+d.value); }
 let persistAsked = false;
 function saveData() {
-  const ok = lsSet(LS_DATA, { version: 1, settings: D.settings, days: D.days });
+  const ok = lsSet(LS_DATA, { version: 2, settings: D.settings, days: D.days });
   if (!ok) toast('没存上：浏览器不允许保存数据（无痕模式？）');
   if (!persistAsked && navigator.storage && navigator.storage.persist) { persistAsked = true; navigator.storage.persist().catch(() => {}); }
   return ok;
@@ -223,17 +389,20 @@ function saveData() {
 const isPass = () => D.settings && D.settings.mode === 'pass';
 
 function stats() {
-  const days = [...D.days].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
-  const total = days.reduce((s, d) => s + (+d.value || 0), 0);
+  const entries = [...D.days].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  const total = entries.reduce((s, d) => s + (+d.value || 0), 0);
+  const dayCount = entries.reduce((s, d) => s + daysOf(d), 0);
   const price = isPass() ? +D.settings.passPrice || 0 : +(D.settings && D.settings.compare) || 0;
   let breakDate = null, cum = 0;
-  for (const d of days) { cum += +d.value || 0; if (price && !breakDate && cum >= price) breakDate = d.date; }
-  const known = R.map(r => r.p).filter(p => p != null).sort((a, b) => a - b);
-  const avg = days.length ? total / days.length : (known.length ? known[Math.floor(known.length / 2)] : 75);
+  for (const d of entries) { cum += +d.value || 0; if (price && !breakDate && cum >= price) breakDate = d.date; }
+  const known = R.filter(r => r.p != null).map(r => toEUR(r.p, r.cur)).filter(v => v != null).sort((a, b) => a - b);
+  const avg = dayCount ? total / dayCount : (known.length ? known[Math.floor(known.length / 2)] : 75);
   const counts = {};
-  days.forEach(d => (counts[d.resortName] = (counts[d.resortName] || 0) + 1));
+  entries.forEach(d => (counts[d.resortName] = (counts[d.resortName] || 0) + daysOf(d)));
   const fav = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
-  return { days, total, price, pct: price ? total / price : 0, breakDate, avg, left: Math.max(0, price - total), resorts: Object.keys(counts).length, fav };
+  // one stamp per ski day, in date order
+  const stamps = entries.flatMap(e => Array.from({ length: daysOf(e) }, (_, k) => ({ date: addDays(e.date, k), name: e.resortName, multi: daysOf(e) > 1 })));
+  return { entries, total, dayCount, price, pct: price ? total / price : 0, breakDate, avg, left: Math.max(0, price - total), resorts: Object.keys(counts).length, fav, stamps };
 }
 
 /* ---------- my season: pass-mode scene ---------- */
@@ -259,42 +428,41 @@ function scene(pct) {
 
 /* ---------- my season: diary-mode stamp card ---------- */
 const BADGES = [[1, '第一滑'], [5, '周末战士'], [10, '雪场常客'], [20, '雪山住民'], [30, '雪季传说']];
-function stampCard(days) {
-  const slots = Math.max(20, Math.ceil((days.length + 1) / 10) * 10);
+function stampCard(stamps) {
+  const slots = Math.max(20, Math.ceil((stamps.length + 1) / 10) * 10);
   const flake = icon(FLAKE, 28);
   let s = '';
   for (let k = 0; k < slots; k++) {
-    const d = days[k];
+    const d = stamps[k];
     if (d) {
       const dt = parse(d.date);
-      s += `<div class="slot on" title="${esc(fmtDate(d.date) + ' · ' + d.resortName)}">${flake}<small>${dt.getUTCMonth() + 1}/${dt.getUTCDate()}</small></div>`;
+      s += `<div class="slot on${d.multi ? ' multi' : ''}" title="${esc(fmtDate(d.date) + ' · ' + d.name + (d.multi ? ' · 多天通票' : ''))}">${flake}<small>${dt.getUTCMonth() + 1}/${dt.getUTCDate()}</small></div>`;
     } else s += `<div class="slot" aria-hidden="true"></div>`;
   }
-  return `<div class="stamps" role="img" aria-label="集章卡：已盖 ${days.length} 个章">${s}</div>`;
+  return `<div class="stamps" role="img" aria-label="集章卡：已盖 ${stamps.length} 个章">${s}</div>
+    <div class="legend"><span><i class="t-high"></i>单日票</span><span><i class="stamp-multi"></i>多天通票</span></div>`;
 }
 
 /* ---------- my season: forms ---------- */
-const FORM = { date: localToday(), resort: '', value: '', note: '', custom: '' };
-function resortOptions(sel) {
-  let o = `<option value="">选雪场…</option>`;
-  for (const st of STATES.slice(1)) {
-    o += `<optgroup label="${esc(st)}">` + R.filter(r => r.st === st).map(r => `<option value="${esc(r.id)}"${r.id === sel ? ' selected' : ''}>${esc(r.n)}</option>`).join('') + `</optgroup>`;
-  }
-  return o + `<option value="_other"${sel === '_other' ? ' selected' : ''}>其他雪场（自己填）</option>`;
-}
+const FORM = { kind: 'day', ndays: 3, date: localToday(), resort: '', rname: '', value: '', note: '' };
+const formN = () => (FORM.kind === 'multi' ? Math.max(2, Math.min(21, parseInt(FORM.ndays, 10) || 2)) : 1);
 function autoValue() {
   const r = RBY[FORM.resort];
-  if (!r) return null;
-  const i = priceOn(r, FORM.date);
-  return i.s === 'open' ? i.p : null;
+  if (!r || !DATE_RE.test(FORM.date)) return null;
+  const i = priceOn(r, FORM.date, formN());
+  const e = i.s === 'open' ? toEUR(i.p, r.cur) : null;
+  return e == null ? null : round2(e);
 }
 function hintText() {
-  const r = RBY[FORM.resort];
-  if (!FORM.resort) return '选好日期和雪场，会按那天的门市价自动填金额。';
-  if (FORM.resort === '_other') return '自己填雪场名和金额。';
-  const i = priceOn(r, FORM.date);
-  const what = isPass() ? '' : '（网上买得更便宜的话改成实际价格）';
-  return i.s === 'open' ? `按 ${r.n} ${fmtDate(FORM.date)} 门市价 ${eur(i.p)} 自动填好了${what}，可以改。` : `${r.n} 这天${i.txt}，请手动填金额。`;
+  const r = RBY[FORM.resort], n = formN();
+  const what = n > 1 ? `${n} 天票` : '一日票';
+  if (!FORM.resort && !FORM.rname.trim()) return `输入雪场名（中文、别名、拼错几个字母都行），会按当天的${what}门市价自动填金额。`;
+  if (!r) return `“${FORM.rname.trim()}”不在列表里，会按你写的名字记录，金额请手填。`;
+  const i = priceOn(r, FORM.date, n);
+  if (i.s !== 'open') return `${r.n} 这天${i.txt}，请手动填金额。`;
+  const conv = r.cur !== 'EUR' ? `（${money(i.p, r.cur)}，按 1 ${r.cur} ≈ ${num2(PX.fx[r.cur], 'de-AT')} € 换算）` : '';
+  const tail = isPass() ? '' : '网上买得更便宜的话改成实际价格。';
+  return `按 ${r.n} ${fmtMD(FORM.date)} 起的${what} ${eur(toEUR(i.p, r.cur))}${conv} 自动填好了，可以改。${tail}`;
 }
 
 function settingsView() {
@@ -304,7 +472,7 @@ function settingsView() {
   parts.push(`<div><h2>${D.settings ? '设置' : '你这个雪季怎么滑？'}</h2><p class="sub">选一种记录方式，之后随时可以在设置里换。已经记下的滑雪日不会丢。</p></div>`);
   parts.push(`<div class="choices">
     <button class="choice" data-mode="pass" aria-pressed="${mode === 'pass'}">${icon(FLAG, 30)}<span><b>我买了季票</b><small>每滑一天按当天票价抵扣，看小企鹅爬到山顶回本。</small></span></button>
-    <button class="choice" data-mode="diary" aria-pressed="${mode === 'diary'}">${icon(BOOK, 32)}<span><b>没季票，只想记录</b><small>记下每次去哪滑、花了多少，集满滑雪章。</small></span></button>
+    <button class="choice" data-mode="diary" aria-pressed="${mode === 'diary'}">${icon(BOOK, 32)}<span><b>没季票，只想记录</b><small>记下每次去哪滑、花了多少（单日票或多天通票），集满滑雪章。</small></span></button>
   </div>`);
   if (mode) {
     parts.push(`<form class="form" id="setForm">
@@ -322,27 +490,33 @@ function settingsView() {
 function logFormView() {
   const av = autoValue();
   if (FORM.value === '' && av != null) FORM.value = String(av);
-  return `<h3>记一笔滑雪日</h3>
+  const multi = FORM.kind === 'multi';
+  return `<h3>记一笔</h3>
+  <div class="seg" role="group" aria-label="票种">
+    <button class="chip" data-kind="day" aria-pressed="${!multi}">单日票</button>
+    <button class="chip" data-kind="multi" aria-pressed="${multi}">多天通票</button>
+  </div>
   <form class="form" id="logForm">
-    <label class="f"><span>日期</span><input type="date" id="lf-date" required value="${FORM.date}"></label>
-    <label class="f"><span>雪场</span><select id="lf-resort" required>${resortOptions(FORM.resort)}</select></label>
-    ${FORM.resort === '_other' ? `<label class="f"><span>雪场名称</span><input id="lf-custom" required maxlength="60" value="${esc(FORM.custom)}"></label>` : ''}
-    <label class="f"><span>${isPass() ? '抵了多少钱 (€)' : '这天花了多少 (€)'}</span><input type="number" id="lf-value" required min="0" step="0.01" inputmode="decimal" value="${esc(FORM.value)}"></label>
+    <label class="f"><span>${multi ? '第一天' : '日期'}</span><input type="date" id="lf-date" required value="${FORM.date}"></label>
+    ${multi ? `<label class="f"><span>滑了几天</span><input type="number" id="lf-n" required min="2" max="21" step="1" inputmode="numeric" value="${esc(FORM.ndays)}"></label>` : ''}
+    <div class="f"><label for="lf-resort">雪场</label><input id="lf-resort" required maxlength="60" placeholder="如：索尔登 / Soelden / arlberg" value="${esc(FORM.rname)}"></div>
+    <label class="f"><span>${multi ? '整张票' : '这天'}${isPass() ? '抵了多少钱' : '花了多少'} (€)</span><input type="number" id="lf-value" required min="0" step="0.01" inputmode="decimal" value="${esc(FORM.value)}"></label>
     <label class="f wide"><span>备注（可选）</span><input id="lf-note" maxlength="120" placeholder="粉雪！/ 和朋友 / 摔了三次…" value="${esc(FORM.note)}"></label>
     <p class="hint wide" id="lf-hint">${esc(hintText())}</p>
-    <div class="bar wide"><button class="btn pink" type="submit">盖章！+1 天</button></div>
+    <div class="bar wide"><button class="btn pink" type="submit">盖章！+${formN()} 天</button></div>
   </form>`;
 }
 
 function logListView(st) {
-  const list = [...st.days].reverse();
-  const head = `<h3>滑雪日记 <span class="sub">（${st.days.length} 天 · ${st.resorts} 个雪场）</span></h3>`;
+  const list = [...st.entries].reverse();
+  const head = `<h3>滑雪日记 <span class="sub">（${st.dayCount} 天 · ${st.resorts} 个雪场）</span></h3>`;
   if (!list.length) return head + `<p class="empty">还没有记录。滑完第一天回来盖个章吧！</p>`;
   return head + `<div class="log">${list.map(d => {
-    const dt = parse(d.date);
-    return `<div class="stub">
+    const dt = parse(d.date), n = daysOf(d);
+    const span = n > 1 ? `${n} 天通票 · ${fmtMD(d.date)}–${fmtMD(addDays(d.date, n - 1))}` : '';
+    return `<div class="stub${n > 1 ? ' multi' : ''}">
       <div class="d num"><b>${dt.getUTCDate()}</b>${dt.getUTCMonth() + 1}月</div>
-      <div class="what"><b>${esc(d.resortName)}</b>${d.note ? `<small>${esc(d.note)}</small>` : ''}</div>
+      <div class="what"><b>${esc(d.resortName)}</b>${span ? `<small>${span}</small>` : ''}${d.note ? `<small>${esc(d.note)}</small>` : ''}</div>
       <span class="tag t-mid num">${eur(+d.value)}</span>
       ${UI.confirmDel === d.id
         ? `<span class="del bar"><button class="btn sm pink" data-del-yes="${esc(d.id)}">删除</button><button class="btn sm ghost" data-del-no>留着</button></span>`
@@ -372,27 +546,27 @@ function renderMe() {
   if (isPass()) {
     parts.push(`<div class="passhead"><div class="passcard"><span class="modechip">季票回本</span><span class="ticket num">${esc(s.passName)}</span><span class="num">${eur(+s.passPrice)}</span></div><button class="btn sm ghost" id="openSettings">设置</button></div>`);
     const pct = st.pct;
-    const bubble = pct >= 1 ? `回本啦！${st.breakDate ? fmtDate(st.breakDate) : ''}` : st.days.length ? `还差 ${eur(st.left)}` : '第一天在哪里滑？';
+    const bubble = pct >= 1 ? `回本啦！${st.breakDate ? fmtDate(st.breakDate) : ''}` : st.dayCount ? `还差 ${eur(st.left)}` : '第一天在哪里滑？';
     parts.push(`<div class="scene">${scene(pct)}<span class="bubble">${bubble}</span></div>`);
     const blocks = Array.from({ length: 20 }, (_, k) => `<i class="${pct >= (k + 1) / 20 ? (pct >= 1 ? 'over' : 'on') : ''}"></i>`).join('');
     parts.push(`<div class="bigpct"><b class="num">${Math.floor(pct * 100)}%</b><span class="sub">${pct >= 1 ? `已经净赚 ${eur(st.total - st.price)}，接下来每一天都是白滑 ✦` : `回本进度 · 已抵 ${eur(st.total)} / ${eur(st.price)}`}</span></div><div class="blocks" aria-hidden="true">${blocks}</div>`);
     parts.push(`<div class="stats">
-      <div class="stat"><small>已滑天数</small><b class="num">${st.days.length} 天</b></div>
+      <div class="stat"><small>已滑天数</small><b class="num">${st.dayCount} 天</b></div>
       <div class="stat"><small>已抵扣</small><b class="num">${eur(st.total)}</b></div>
       <div class="stat"><small>${st.left > 0 ? '还差' : '净赚'}</small><b class="num">${eur(st.left > 0 ? st.left : st.total - st.price)}</b></div>
-      <div class="stat"><small>${st.left > 0 ? `大约还要滑（按 ${eur(st.avg)}/天）` : '摊到每天的票价'}</small><b class="num">${st.left > 0 ? Math.ceil(st.left / st.avg) + ' 天' : eur(st.price / st.days.length)}</b></div>
+      <div class="stat"><small>${st.left > 0 ? `大约还要滑（按 ${eur(st.avg)}/天）` : '摊到每天的票价'}</small><b class="num">${st.left > 0 ? Math.ceil(st.left / st.avg) + ' 天' : eur(st.price / st.dayCount)}</b></div>
     </div>`);
   } else {
     parts.push(`<div class="passhead"><div class="passcard"><span class="modechip">滑雪日记</span><span class="sub">${PX.season ? PX.season + ' 雪季' : '这个雪季'}的集章卡</span></div><button class="btn sm ghost" id="openSettings">设置</button></div>`);
-    parts.push(stampCard(st.days));
-    parts.push(`<div class="badges">${BADGES.map(([n, name]) => st.days.length >= n
+    parts.push(stampCard(st.stamps));
+    parts.push(`<div class="badges">${BADGES.map(([n, name]) => st.dayCount >= n
       ? `<span class="badge">★ ${name}</span>`
-      : `<span class="badge locked">${name} · 还差 ${n - st.days.length} 天</span>`).join('')}</div>`);
+      : `<span class="badge locked">${name} · 还差 ${n - st.dayCount} 天</span>`).join('')}</div>`);
     parts.push(`<div class="stats">
-      <div class="stat"><small>滑雪天数</small><b class="num">${st.days.length} 天</b></div>
+      <div class="stat"><small>滑雪天数</small><b class="num">${st.dayCount} 天</b></div>
       <div class="stat"><small>雪票总花费</small><b class="num">${eur(st.total)}</b></div>
-      <div class="stat"><small>平均每天</small><b class="num">${st.days.length ? eur(st.total / st.days.length) : '–'}</b></div>
-      <div class="stat"><small>最常去</small><b>${st.fav ? esc(st.fav[0]) + ` <span class="sub">×${st.fav[1]}</span>` : '–'}</b></div>
+      <div class="stat"><small>平均每天</small><b class="num">${st.dayCount ? eur(st.total / st.dayCount) : '–'}</b></div>
+      <div class="stat"><small>最常去</small><b>${st.fav ? esc(st.fav[0]) + ` <span class="sub">×${st.fav[1]} 天</span>` : '–'}</b></div>
     </div>`);
     if (st.price) {
       parts.push(`<p class="compare">对比 ${eur(st.price)} 的季票：${st.total >= st.price
@@ -433,29 +607,44 @@ function bindMe() {
   const os = $('#openSettings');
   if (os) os.onclick = () => { UI.editSettings = true; UI.pickMode = D.settings.mode; renderMe(); };
 
+  document.querySelectorAll('[data-kind]').forEach(b => (b.onclick = () => { FORM.kind = b.dataset.kind; FORM.value = ''; renderMe(); }));
   const lf = $('#logForm');
   if (lf) {
-    const resync = () => { const av = autoValue(); if (av != null) { FORM.value = String(av); $('#lf-value').value = FORM.value; } $('#lf-hint').textContent = hintText(); };
+    const resync = () => {
+      const av = autoValue();
+      if (av != null) { FORM.value = String(av); $('#lf-value').value = FORM.value; }
+      $('#lf-hint').textContent = hintText();
+      lf.querySelector('button[type="submit"]').textContent = `盖章！+${formN()} 天`;
+    };
     $('#lf-date').onchange = e => { FORM.date = e.target.value; resync(); };
-    $('#lf-resort').onchange = e => { FORM.resort = e.target.value; FORM.value = ''; renderMe(); };
+    const nIn = $('#lf-n');
+    if (nIn) nIn.oninput = e => { FORM.ndays = e.target.value; resync(); };
+    attachSuggest($('#lf-resort'), {
+      onType: v => { FORM.rname = v; FORM.resort = ''; $('#lf-hint').textContent = hintText(); },
+      onPick: r => { FORM.resort = r.id; FORM.rname = r.n; FORM.value = ''; resync(); },
+    });
     $('#lf-value').oninput = e => (FORM.value = e.target.value);
     $('#lf-note').oninput = e => (FORM.note = e.target.value);
-    const cu = $('#lf-custom');
-    if (cu) cu.oninput = e => (FORM.custom = e.target.value);
     lf.onsubmit = e => {
       e.preventDefault();
       const r = RBY[FORM.resort];
-      const name = r ? r.n : FORM.custom.trim();
-      const value = +FORM.value;
+      const name = r ? r.n : FORM.rname.trim();
+      const value = +FORM.value, n = formN();
       if (!DATE_RE.test(FORM.date) || !name || FORM.value === '' || !(value >= 0)) { toast('日期、雪场和金额都要填'); return; }
       const before = stats().pct;
-      D.days.push({ id: 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), date: FORM.date, resortId: r ? r.id : '', resortName: name, value, note: FORM.note.trim(), createdAt: new Date().toISOString() });
+      D.days.push({
+        id: 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), date: FORM.date, days: n, kind: n > 1 ? 'multi' : 'day',
+        resortId: r ? r.id : '', resortName: name, value, note: FORM.note.trim(), createdAt: new Date().toISOString(),
+      });
       if (!saveData()) { D.days.pop(); return; }
       FORM.note = '';
       renderMe();
       const st = stats();
       if (isPass()) toast(before < 1 && st.pct >= 1 ? '回本啦！之后每一天都是白滑' : `+${eur(value)}，回本进度 ${Math.floor(st.pct * 100)}%`);
-      else { const b = BADGES.find(([n]) => n === st.days.length); toast(b ? `解锁徽章：${b[1]}！` : `盖章成功，第 ${st.days.length} 天`); }
+      else {
+        const b = BADGES.filter(([k]) => st.dayCount >= k && st.dayCount - n < k).pop();
+        toast(b ? `解锁徽章：${b[1]}！` : `盖章成功，一共 ${st.dayCount} 天`);
+      }
     };
   }
 
@@ -476,7 +665,7 @@ function bindMe() {
 /* ---------- backup ---------- */
 async function exportData() {
   const name = `pixel-ski-backup-${localToday()}.json`;
-  const blob = new Blob([JSON.stringify({ app: 'pixel-ski', version: 1, exportedAt: new Date().toISOString(), settings: D.settings, days: D.days }, null, 2)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify({ app: 'pixel-ski', version: 2, exportedAt: new Date().toISOString(), settings: D.settings, days: D.days }, null, 2)], { type: 'application/json' });
   const touch = matchMedia('(pointer: coarse)').matches;
   if (touch && navigator.canShare) {
     const f = new File([blob], name, { type: 'application/json' });
@@ -496,7 +685,7 @@ async function importData(f) {
   try { j = JSON.parse(await f.text()); } catch (e) { toast('读不了这个文件：不是有效的 JSON'); return; }
   if (!j || j.app !== 'pixel-ski' || !Array.isArray(j.days)) { toast('这不是像素雪票本的备份文件'); return; }
   const days = j.days.filter(validDay);
-  if (!confirm(`备份里有 ${days.length} 条滑雪记录。恢复后会替换现在的 ${D.days.length} 条记录和设置，继续吗？`)) return;
+  if (!confirm(`备份里有 ${days.length} 条记录。恢复后会替换现在的 ${D.days.length} 条记录和设置，继续吗？`)) return;
   D.settings = j.settings || D.settings; D.days = days;
   if (saveData()) toast(`已恢复 ${days.length} 条记录`);
   renderMe();
@@ -506,8 +695,9 @@ async function importData(f) {
 function renderFooter() {
   const bits = [];
   if (PX.loaded) {
-    bits.push(`<div>价格数据：${esc(PX.season)} 雪季 · 更新于 ${esc(PX.updated)}${PX.offline ? ' · 离线，显示的是上次保存的价格' : ''}${PX.skipped ? ` · ⚠ prices.json 里有 ${PX.skipped} 条格式不对，已跳过` : ''}</div>`);
+    bits.push(`<div>价格数据：${esc(PX.season)} 雪季 · 更新于 ${esc(PX.updated)}${PX.offline ? ' · 离线，显示的是上次保存的价格' : ''}${PX.skipped ? ` · ⚠ 有 ${PX.skipped} 条数据格式不对，已跳过` : ''}</div>`);
     if (PX.notice) bits.push(`<div>${esc(PX.notice)}</div>`);
+    if (PX.fxNote) bits.push(`<div>${PX.fxNote}。瑞士雪场记账时按这个汇率换算成欧元。</div>`);
     if (PX.sources.length) bits.push(`<div>来源：${PX.sources.map(s => `<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a>`).join(' · ')}</div>`);
   }
   $('#footer').innerHTML = bits.join('');
@@ -539,7 +729,8 @@ function show(v) {
   $('#tab-me').setAttribute('aria-selected', UI.view === 'me');
 }
 function prefillLog(id, date) {
-  Object.assign(FORM, { resort: id, date, value: '' });
+  const r = RBY[id];
+  Object.assign(FORM, { resort: id, rname: r ? r.n : '', date, value: '', kind: UI.n > 1 ? 'multi' : 'day', ndays: UI.n > 1 ? UI.n : FORM.ndays });
   location.hash = 'me'; show('me'); renderMe();
   const f = $('#logForm') || $('#me');
   f.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -560,16 +751,24 @@ function boot() {
   }
 
   $('#states').addEventListener('click', e => {
-    const b = e.target.closest('[data-st]'); if (!b) return;
-    UI.st = b.dataset.st;
-    document.querySelectorAll('#states .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.st === UI.st));
-    renderPrices();
+    const c = e.target.closest('[data-country]');
+    if (c) { UI.country = c.dataset.country; UI.st = '全部'; renderFilters(); renderPrices(); return; }
+    const b = e.target.closest('[data-st]');
+    if (b) { UI.st = b.dataset.st; renderFilters(); renderPrices(); }
   });
   $('#date').addEventListener('change', e => { if (e.target.value) { UI.date = clampDate(e.target.value); renderPrices(); } });
   $('#prev').onclick = () => { UI.date = clampDate(addDays(UI.date, -1)); renderPrices(); };
   $('#next').onclick = () => { UI.date = clampDate(addDays(UI.date, 1)); renderPrices(); };
   $('#today').onclick = () => { UI.date = clampDate(localToday()); renderPrices(); };
-  $('#q').addEventListener('input', e => { UI.q = e.target.value.trim().toLowerCase(); renderPrices(); });
+  $('#ticket').addEventListener('change', e => { UI.n = +e.target.value || 1; renderPrices(); });
+  attachSuggest($('#q'), {
+    onType: v => { UI.q = v.trim(); renderPrices(); },
+    onPick: r => {
+      UI.q = r.n; UI.open = r.id;
+      if (UI.country !== 'all' && r.c !== UI.country) { UI.country = 'all'; renderFilters(); }
+      renderPrices();
+    },
+  });
   $('#sort').addEventListener('change', e => { UI.sort = e.target.value; renderPrices(); });
   $('#list').addEventListener('click', e => {
     const cell = e.target.closest('[data-day]'); if (cell) { UI.date = cell.dataset.day; renderPrices(); return; }

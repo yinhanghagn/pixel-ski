@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>像素雪票本</title>
-<meta name="description" content="奥地利雪场每日雪票价格，加上季票回本和滑雪日记。">
+<meta name="description" content="奥地利、瑞士、法国雪场的每日雪票和多天通票价格，加上季票回本和滑雪日记。">
 <meta name="theme-color" content="#bfe5ff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121641" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
@@ -26,7 +26,7 @@
     <div class="mascot" id="mascot"></div>
     <div class="txt">
       <h1>像素雪票本</h1>
-      <p id="tagline">奥地利雪季 · 每日雪票价格 + 我的雪季记录</p>
+      <p id="tagline">阿尔卑斯雪季 · 雪票价格 + 我的雪季记录</p>
     </div>
   </header>
 
@@ -40,7 +40,7 @@
   <section class="panel" id="view-prices" role="tabpanel">
     <div>
       <h2>这一天滑雪要多少钱？</h2>
-      <p class="sub">成人一日票门市价（Kassapreis）。选一天看各雪场当天价格，点雪场展开它整个雪季的价格日历。</p>
+      <p class="sub">成人门市价。选日期和票种（一日票或多天通票），看各雪场的价格；点雪场展开它整个雪季的价格日历。</p>
     </div>
     <div class="bar">
       <div class="datebox">
@@ -49,14 +49,15 @@
         <button class="btn sm ghost" id="next" aria-label="后一天">▶</button>
         <button class="btn sm" id="today">今天</button>
       </div>
-      <input type="search" id="q" placeholder="搜雪场…" aria-label="搜索雪场" class="grow">
+      <select id="ticket" aria-label="票种"><option value="1">一日票</option></select>
+      <div class="grow"><input type="search" id="q" placeholder="搜雪场：中文、村镇名、拼错也行…" aria-label="搜索雪场"></div>
       <select id="sort" aria-label="排序">
         <option value="asc">便宜优先</option>
         <option value="desc">贵的优先</option>
         <option value="name">按名称</option>
       </select>
     </div>
-    <div class="chips" id="states"></div>
+    <div class="filters" id="states"></div>
     <div class="summary" id="summary"></div>
     <div class="legend" id="legend"></div>
     <div class="list" id="list"><p class="empty">正在加载价格…</p></div>
