@@ -1,0 +1,708 @@
+{
+  "season": "2026/27",
+  "updated": "2026-10-29",
+  "currency": "EUR",
+  "range": {
+    "from": "2026-09-26",
+    "to": "2027-05-31"
+  },
+  "tiers": {
+    "cheap": 65,
+    "pricey": 79
+  },
+  "notice": "成人一日票门市价（Kassapreis），不含 KeyCard 押金和 Gästekarte 优惠。线上购票常更便宜，出发前请以雪场官网为准。标“推算”的时段日期是按报道描述推出来的。",
+  "sources": [
+    {
+      "name": "urlaubshamster.at 价格对比",
+      "url": "https://www.urlaubshamster.at/skipass-preise-2026-27/"
+    },
+    {
+      "name": "Leadersnet",
+      "url": "https://www.leadersnet.at/news/104856,wer-oesterreichs-skipasspreise-vergleicht-muss-auf-den-kalender.html"
+    },
+    {
+      "name": "SkiWelt",
+      "url": "https://www.skiwelt.at/en/ski-passes.html"
+    },
+    {
+      "name": "Obertauern",
+      "url": "https://www.ski-obertauern.at/en/ski-pass/ski-pass-prices"
+    },
+    {
+      "name": "Stubaier Gletscher",
+      "url": "https://www.stubaier-gletscher.com/en/ski-area/prices/"
+    },
+    {
+      "name": "schneehoehen.de (Sölden)",
+      "url": "https://www.schneehoehen.de/skigebiete/preise/oetztal-arena-soelden"
+    },
+    {
+      "name": "ski1.at 开季日期",
+      "url": "https://www.ski1.at/ski1/red/aktiv-am-berg/skigebiete-in-oesterreich--saisonstart-2026-27-im-ueberblick/"
+    }
+  ],
+  "resorts": [
+    {
+      "id": "arlberg",
+      "name": "Ski Arlberg",
+      "sub": "St. Anton · Lech Zürs · Warth-Schröcken",
+      "state": "Tirol",
+      "price": 85,
+      "open": "2026-12-02",
+      "note": "Warth-Schröcken 12月4日开。"
+    },
+    {
+      "id": "soelden",
+      "name": "Sölden",
+      "state": "Tirol",
+      "price": 84.5,
+      "open": "2026-11-12",
+      "close": "2027-04-18",
+      "periods": [
+        { "from": "2026-12-19", "to": "2027-01-06", "price": 86.5, "label": "Topsaison" },
+        { "from": "2027-01-30", "to": "2027-02-26", "price": 86.5, "label": "Topsaison" }
+      ],
+      "note": "冰川区 10 月中已开（秋季价另计）。线上购票更便宜。"
+    },
+    {
+      "id": "ischgl",
+      "name": "Ischgl / Samnaun",
+      "sub": "Silvretta Arena",
+      "state": "Tirol",
+      "price": 83,
+      "open": "2026-11-26",
+      "note": "不含 Gästekarte 价。闭季约 5 月初。"
+    },
+    {
+      "id": "kitz",
+      "name": "KitzSki Kitzbühel / Kirchberg",
+      "state": "Tirol",
+      "price": 83,
+      "open": "2026-11-06",
+      "close": "2027-04-04",
+      "note": "11月6日起 Resterkogel 先开，11月27日起全面运营。Kitzbüheler Horn 同票。"
+    },
+    {
+      "id": "mayrhofen",
+      "name": "Mayrhofen",
+      "sub": "Mountopolis",
+      "state": "Tirol",
+      "price": 82,
+      "open": "2026-12-04"
+    },
+    {
+      "id": "zillarena",
+      "name": "Zillertal Arena",
+      "state": "Tirol",
+      "price": 82,
+      "open": "2026-12-04"
+    },
+    {
+      "id": "hochzillertal",
+      "name": "Hochzillertal / Hochfügen",
+      "state": "Tirol",
+      "price": 82,
+      "open": "2026-12-04"
+    },
+    {
+      "id": "spieljoch",
+      "name": "Spieljoch Fügen",
+      "state": "Tirol",
+      "price": 82,
+      "open": "2026-12-11",
+      "note": "同时可滑 Hochzillertal / Hochfügen。"
+    },
+    {
+      "id": "hintertux",
+      "name": "Hintertuxer Gletscher",
+      "state": "Tirol",
+      "price": 82,
+      "open": "2026-10-02"
+    },
+    {
+      "id": "sfl",
+      "name": "Serfaus-Fiss-Ladis",
+      "state": "Tirol",
+      "price": 80.5,
+      "open": "2026-12-04",
+      "note": "持 Gästekarte 12月4–18日只要 60 €。12月19日起全面运营。"
+    },
+    {
+      "id": "skiwelt",
+      "name": "SkiWelt Wilder Kaiser-Brixental",
+      "state": "Tirol",
+      "price": 79.5,
+      "open": "2026-12-05",
+      "close": "2027-04-04",
+      "periods": [
+        { "from": "2026-12-05", "to": "2026-12-18", "price": 71.5, "label": "Nebensaison" },
+        { "from": "2026-12-19", "to": "2027-03-12", "price": 79.5, "label": "Hauptsaison" },
+        { "from": "2027-03-13", "to": "2027-04-04", "price": 71.5, "label": "Nebensaison" }
+      ],
+      "note": "大部分区域 3月29日闭季，只有 Ellmau 延到 4月4日。"
+    },
+    {
+      "id": "pitztal",
+      "name": "Pitztaler Gletscher & Rifflsee",
+      "state": "Tirol",
+      "price": 77,
+      "open": "2026-09-26"
+    },
+    {
+      "id": "kaunertal",
+      "name": "Kaunertaler Gletscher",
+      "state": "Tirol",
+      "price": 77,
+      "open": "2026-10-17"
+    },
+    {
+      "id": "stubai",
+      "name": "Stubaier Gletscher",
+      "state": "Tirol",
+      "price": 75.5,
+      "open": "2026-10-09",
+      "close": "2027-05-17",
+      "periods": [
+        { "from": "2026-10-09", "to": "2026-10-23", "price": 64.2, "label": "Herbst" },
+        { "from": "2026-10-24", "to": "2027-04-16", "price": 75.5, "label": "Winter" },
+        { "from": "2027-04-17", "to": "2027-05-17", "price": 64.2, "label": "Frühjahr" }
+      ]
+    },
+    {
+      "id": "kals",
+      "name": "Großglockner Resort Kals-Matrei",
+      "state": "Tirol",
+      "price": 74
+    },
+    {
+      "id": "lienz",
+      "name": "Lienz Zettersfeld",
+      "state": "Tirol",
+      "price": 74
+    },
+    {
+      "id": "sillian",
+      "name": "Sillian Thurntaler",
+      "state": "Tirol",
+      "price": 74
+    },
+    {
+      "id": "stjakob",
+      "name": "St. Jakob im Defereggental",
+      "state": "Tirol",
+      "price": 74
+    },
+    {
+      "id": "kappl",
+      "name": "Kappl & See",
+      "state": "Tirol",
+      "price": 73
+    },
+    {
+      "id": "juwel",
+      "name": "Ski Juwel Alpbachtal Wildschönau",
+      "state": "Tirol",
+      "price": 71.5
+    },
+    {
+      "id": "ehrwald",
+      "name": "Ehrwald · Lermoos · Biberwier",
+      "state": "Tirol",
+      "price": 70.5
+    },
+    {
+      "id": "berwang",
+      "name": "Berwang / Bichlbach / Rinnen",
+      "state": "Tirol",
+      "price": 70.5
+    },
+    {
+      "id": "nauders",
+      "name": "Nauders Bergkastel",
+      "state": "Tirol",
+      "price": 70,
+      "note": "线上 68 €。"
+    },
+    {
+      "id": "gurgl",
+      "name": "Obergurgl-Hochgurgl",
+      "state": "Tirol",
+      "price": 69.5,
+      "open": "2026-11-19",
+      "note": "Topsaison 75.50 €，具体日期还没公布。"
+    },
+    {
+      "id": "hochzeiger",
+      "name": "Hochzeiger Jerzens",
+      "state": "Tirol",
+      "price": 69,
+      "open": "2026-12-04"
+    },
+    {
+      "id": "christlum",
+      "name": "Christlum Achenkirch",
+      "state": "Tirol",
+      "price": 69
+    },
+    {
+      "id": "steinplatte",
+      "name": "Steinplatte Winklmoosalm",
+      "state": "Tirol",
+      "price": 66
+    },
+    {
+      "id": "stjohann",
+      "name": "St. Johann in Tirol",
+      "state": "Tirol",
+      "price": 65,
+      "open": "2026-12-04"
+    },
+    {
+      "id": "kuehtai",
+      "name": "Kühtai / Hochoetz",
+      "state": "Tirol",
+      "price": 63,
+      "open": "2026-11-27",
+      "periods": [
+        { "from": "2026-11-27", "to": "2026-12-18", "price": 50.5, "label": "Saisonstart" },
+        { "from": "2026-12-19", "to": "2027-01-06", "price": 66.5, "label": "Weihnachten" },
+        { "from": "2027-02-01", "to": "2027-02-28", "price": 66.5, "label": "Februar" },
+        { "from": "2027-04-01", "to": "2027-04-30", "price": 50.5, "label": "April" }
+      ],
+      "estimated": true,
+      "note": "报道只说“圣诞假期和 2 月 66.50 €，1 月和 3 月 63 €，开季和 4 月 50.50 €”，具体日期是推算。"
+    },
+    {
+      "id": "galtuer",
+      "name": "Galtür Silvapark",
+      "state": "Tirol",
+      "price": 63
+    },
+    {
+      "id": "seefeld",
+      "name": "Rosshütte Seefeld",
+      "state": "Tirol",
+      "price": 62.5
+    },
+    {
+      "id": "schlick",
+      "name": "Schlick 2000",
+      "state": "Tirol",
+      "price": 61.5,
+      "note": "这是持 Stubai Gästekarte 的价格，没卡约贵 10%。"
+    },
+    {
+      "id": "bergeralm",
+      "name": "Bergeralm Steinach",
+      "state": "Tirol",
+      "price": 60.2
+    },
+    {
+      "id": "vent",
+      "name": "Vent",
+      "state": "Tirol",
+      "price": 53
+    },
+    {
+      "id": "buchenstein",
+      "name": "Buchensteinwand Pillersee",
+      "state": "Tirol",
+      "price": 52
+    },
+    {
+      "id": "venet",
+      "name": "Venet Landeck / Zams",
+      "state": "Tirol",
+      "price": 44
+    },
+    {
+      "id": "axams",
+      "name": "Axamer Lizum",
+      "state": "Tirol",
+      "price": null,
+      "open": "2026-11-21",
+      "note": "官方冬季价格还没公布。"
+    },
+    {
+      "id": "hochkoessen",
+      "name": "Hochkössen",
+      "state": "Tirol",
+      "dynamic": true,
+      "note": "动态定价，线上约 40 € 起。"
+    },
+    {
+      "id": "saalbach",
+      "name": "Skicircus Saalbach",
+      "sub": "Hinterglemm · Leogang · Fieberbrunn",
+      "state": "Salzburg",
+      "price": 82,
+      "open": "2026-11-27"
+    },
+    {
+      "id": "kitzsteinhorn",
+      "name": "Kitzsteinhorn / Maiskogel",
+      "sub": "Kaprun",
+      "state": "Salzburg",
+      "price": 82,
+      "open": "2026-10-10"
+    },
+    {
+      "id": "schmitten",
+      "name": "Schmittenhöhe Zell am See",
+      "state": "Salzburg",
+      "price": 82
+    },
+    {
+      "id": "gastein",
+      "name": "Ski Gastein",
+      "sub": "Bad Gastein · Bad Hofgastein · Sportgastein",
+      "state": "Salzburg",
+      "price": 81.5,
+      "open": "2026-12-11"
+    },
+    {
+      "id": "dorfgastein",
+      "name": "Dorfgastein / Großarltal",
+      "state": "Salzburg",
+      "price": 81.5,
+      "open": "2026-12-04"
+    },
+    {
+      "id": "snowspace",
+      "name": "Snow Space Salzburg",
+      "sub": "Flachau · Wagrain · St. Johann",
+      "state": "Salzburg",
+      "price": 81,
+      "open": "2026-11-28",
+      "periods": [
+        { "from": "2026-09-01", "to": "2026-12-18", "price": 75.5, "label": "Vorsaison" },
+        { "from": "2027-03-27", "to": "2027-06-30", "price": 75.5, "label": "Nachsaison" }
+      ]
+    },
+    {
+      "id": "zauchensee",
+      "name": "Zauchensee / Flachauwinkl",
+      "state": "Salzburg",
+      "price": 81,
+      "periods": [
+        { "from": "2026-09-01", "to": "2026-12-18", "price": 75.5, "label": "Vorsaison" },
+        { "from": "2027-03-27", "to": "2027-06-30", "price": 75.5, "label": "Nachsaison" }
+      ]
+    },
+    {
+      "id": "kleinarl",
+      "name": "Flachauwinkl / Kleinarl",
+      "state": "Salzburg",
+      "price": 81
+    },
+    {
+      "id": "hochkoenig",
+      "name": "Hochkönig",
+      "state": "Salzburg",
+      "price": 81,
+      "open": "2026-12-05"
+    },
+    {
+      "id": "radstadt",
+      "name": "Radstadt / Altenmarkt",
+      "state": "Salzburg",
+      "price": 75,
+      "note": "只限 Radstadt-Altenmarkt 缆车联盟。"
+    },
+    {
+      "id": "dachsteinwest",
+      "name": "Dachstein West",
+      "sub": "Gosau · Russbach · Annaberg",
+      "state": "Salzburg",
+      "price": 73,
+      "open": "2026-12-04",
+      "note": "线上 69 €。"
+    },
+    {
+      "id": "obertauern",
+      "name": "Obertauern",
+      "state": "Salzburg",
+      "price": 72,
+      "open": "2026-11-20",
+      "close": "2027-05-02",
+      "note": "A/B 季同价。Tauernrunde 约 11月26日起。"
+    },
+    {
+      "id": "wildkogel",
+      "name": "Wildkogel",
+      "state": "Salzburg",
+      "price": 72
+    },
+    {
+      "id": "filzmoos",
+      "name": "Filzmoos",
+      "state": "Salzburg",
+      "price": 70
+    },
+    {
+      "id": "rauris",
+      "name": "Rauriser Hochalmbahnen",
+      "state": "Salzburg",
+      "price": 69.5
+    },
+    {
+      "id": "lofer",
+      "name": "Almenwelt Lofer",
+      "state": "Salzburg",
+      "price": 64.5,
+      "note": "Topsaison 67.50 €，日期未公布。"
+    },
+    {
+      "id": "fanningberg",
+      "name": "Fanningberg",
+      "state": "Salzburg",
+      "price": 64
+    },
+    {
+      "id": "werfenweng",
+      "name": "Werfenweng",
+      "state": "Salzburg",
+      "price": 61
+    },
+    {
+      "id": "weisssee",
+      "name": "Weißsee Gletscherwelt",
+      "state": "Salzburg",
+      "price": 54
+    },
+    {
+      "id": "damuels",
+      "name": "Damüls Mellau",
+      "state": "Vorarlberg",
+      "price": 75.5,
+      "note": "据 ORF 报道，官方价目表还没上线。"
+    },
+    {
+      "id": "kleinwalsertal",
+      "name": "Oberstdorf-Kleinwalsertal",
+      "sub": "Ifen · Fellhorn/Kanzelwand · Walmendingerhorn",
+      "state": "Vorarlberg",
+      "price": 72.9
+    },
+    {
+      "id": "diedamskopf",
+      "name": "Diedamskopf",
+      "state": "Vorarlberg",
+      "price": 70
+    },
+    {
+      "id": "sonnenkopf",
+      "name": "Sonnenkopf Klösterle",
+      "state": "Vorarlberg",
+      "price": 61
+    },
+    {
+      "id": "laterns",
+      "name": "Laterns Gapfohl",
+      "state": "Vorarlberg",
+      "price": 53
+    },
+    {
+      "id": "boedele",
+      "name": "Bödele Schwarzenberg",
+      "state": "Vorarlberg",
+      "price": 48.1,
+      "open": "2026-11-14"
+    },
+    {
+      "id": "montafon",
+      "name": "Silvretta Montafon",
+      "state": "Vorarlberg",
+      "dynamic": true,
+      "open": "2026-11-27"
+    },
+    {
+      "id": "gargellen",
+      "name": "Gargellen",
+      "state": "Vorarlberg",
+      "dynamic": true,
+      "open": "2026-11-27"
+    },
+    {
+      "id": "brandnertal",
+      "name": "Brandnertal",
+      "state": "Vorarlberg",
+      "dynamic": true,
+      "open": "2026-11-28"
+    },
+    {
+      "id": "golm",
+      "name": "Golm",
+      "state": "Vorarlberg",
+      "dynamic": true,
+      "open": "2026-11-21"
+    },
+    {
+      "id": "schladming",
+      "name": "Schladming-Dachstein 4-Berge",
+      "state": "Steiermark",
+      "price": 81.5,
+      "open": "2026-11-28"
+    },
+    {
+      "id": "turrach",
+      "name": "Turracher Höhe",
+      "state": "Steiermark",
+      "price": 72.5
+    },
+    {
+      "id": "kreischberg",
+      "name": "Kreischberg",
+      "state": "Steiermark",
+      "price": 72,
+      "open": "2026-12-04"
+    },
+    {
+      "id": "tauplitz",
+      "name": "Die Tauplitz",
+      "state": "Steiermark",
+      "price": 62,
+      "open": "2026-11-28"
+    },
+    {
+      "id": "loser",
+      "name": "Loser Altaussee",
+      "state": "Steiermark",
+      "price": 62
+    },
+    {
+      "id": "lachtal",
+      "name": "Lachtal",
+      "state": "Steiermark",
+      "price": 62
+    },
+    {
+      "id": "planneralm",
+      "name": "Planneralm",
+      "state": "Steiermark",
+      "price": 62
+    },
+    {
+      "id": "riesneralm",
+      "name": "Riesneralm",
+      "state": "Steiermark",
+      "price": 62
+    },
+    {
+      "id": "praebichl",
+      "name": "Präbichl",
+      "state": "Steiermark",
+      "price": 55.5
+    },
+    {
+      "id": "bkk",
+      "name": "Bad Kleinkirchheim",
+      "state": "Kärnten",
+      "price": 73,
+      "open": "2026-12-05"
+    },
+    {
+      "id": "gerlitzen",
+      "name": "Gerlitzen",
+      "state": "Kärnten",
+      "price": 73,
+      "open": "2026-12-05"
+    },
+    {
+      "id": "katschberg",
+      "name": "Katschberg",
+      "state": "Kärnten",
+      "price": 73,
+      "open": "2026-12-04"
+    },
+    {
+      "id": "nassfeld",
+      "name": "Nassfeld",
+      "state": "Kärnten",
+      "price": 73,
+      "open": "2026-12-04"
+    },
+    {
+      "id": "moelltal",
+      "name": "Mölltaler Gletscher",
+      "state": "Kärnten",
+      "price": 72,
+      "open": "2026-10-24",
+      "note": "开季日约在 10月24日（Kaunertal 之后一周）。"
+    },
+    {
+      "id": "goldeck",
+      "name": "Goldeck Spittal",
+      "state": "Kärnten",
+      "price": 64.5,
+      "note": "含 2 小时 drautal perle 泳池。"
+    },
+    {
+      "id": "petzen",
+      "name": "Petzen",
+      "state": "Kärnten",
+      "price": 49,
+      "note": "9:00 起有效。"
+    },
+    {
+      "id": "klippitz",
+      "name": "Klippitztörl",
+      "state": "Kärnten",
+      "price": 49
+    },
+    {
+      "id": "koralpe",
+      "name": "Koralpe",
+      "state": "Kärnten",
+      "price": 43.5
+    },
+    {
+      "id": "heiligenblut",
+      "name": "Großglockner Heiligenblut",
+      "state": "Kärnten",
+      "dynamic": true
+    },
+    {
+      "id": "kasberg",
+      "name": "Kasberg Grünau",
+      "state": "Oberösterreich",
+      "price": 61,
+      "note": "线上 56.50 €。"
+    },
+    {
+      "id": "hinterstoder",
+      "name": "Hinterstoder / Wurzeralm",
+      "state": "Oberösterreich",
+      "dynamic": true,
+      "open": "2026-11-28"
+    },
+    {
+      "id": "hochficht",
+      "name": "Hochficht",
+      "state": "Oberösterreich",
+      "dynamic": true,
+      "open": "2026-12-05"
+    },
+    {
+      "id": "hochkar",
+      "name": "Hochkar",
+      "state": "Niederösterreich",
+      "dynamic": true,
+      "open": "2026-12-04"
+    },
+    {
+      "id": "oetscher",
+      "name": "Ötscher Lackenhof",
+      "state": "Niederösterreich",
+      "dynamic": true,
+      "open": "2026-12-05"
+    },
+    {
+      "id": "semmering",
+      "name": "Semmering Hirschenkogel",
+      "state": "Niederösterreich",
+      "price": null,
+      "note": "新季价格没公布，上季 56.50 €。"
+    }
+  ]
+}
